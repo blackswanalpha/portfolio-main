@@ -1,0 +1,1 @@
+A modern portfolio website built with Next.js 16, React 19, and Chakra UI v3. Features a Hero section, Projects portfolio, Experience timeline, Testimonials, Contact form, dark mode, and responsive design with 3D animations.
