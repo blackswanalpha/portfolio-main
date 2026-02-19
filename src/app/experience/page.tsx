@@ -19,8 +19,11 @@ import {
 import { LuBriefcase, LuCircleCheck, LuDownload, LuMapPin, LuCalendar } from "react-icons/lu";
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
+import PageWrapper from "@/components/PageWrapper";
+import ScrollReveal from "@/components/ScrollReveal";
 
 const experiences = [
+    // ...
     {
         year: "2022 - Now",
         role: "Lead Full Stack Engineer",
@@ -66,161 +69,173 @@ const experiences = [
 
 export default function ExperiencePage() {
     return (
-        <Box minH="screen" bg="background">
-            <Navbar />
+        <PageWrapper>
+            <Box minH="screen" bg="background">
+                <Navbar />
 
-            <Container maxW="7xl" pt={{ base: 32, md: 40 }} pb={20} px={{ base: 4, sm: 6, lg: 8 }}>
-                {/* Header */}
-                <VStack align="center" gap={6} mb={20} textAlign="center">
-                    <HStack gap={2} px={4} py={2} rounded="full" bg="primary.50" _dark={{ bg: "primary.900/20" }} color="primary.500" fontWeight="semibold" fontSize="sm">
-                        <Box position="relative" display="flex" h="2" w="2">
-                            <Box as="span" animation="ping 1.5s infinite" position="absolute" inset={0} rounded="full" bg="primary.400" opacity={0.75} />
-                            <Box as="span" position="relative" rounded="full" h="2" w="2" bg="primary.500" />
-                        </Box>
-                        <Text>Open to Opportunities</Text>
-                    </HStack>
-                    <Heading as="h1" fontSize={{ base: "4xl", md: "5xl" }} fontWeight="bold" color="text.primary" letterSpacing="tight">
-                        My Professional Journey
-                    </Heading>
-                    <Text fontSize="lg" color="text.secondary" maxW="3xl">
-                        Over 8 years of crafting high-performance web applications and intuitive user interfaces. A timeline of innovation, leadership, and technical mastery.
-                    </Text>
-
-                    {/* Category Filter */}
-                    <HStack p={1.5} bg="white" _dark={{ bg: "gray.800" }} rounded="full" border="1px solid" borderColor="border.subtle" shadow="sm">
-                        <Button size="sm" rounded="full" bg="primary.500" color="white" px={6}>All Roles</Button>
-                        <Button size="sm" rounded="full" variant="ghost" color="text.muted" _hover={{ color: "primary.500", bg: "primary.50" }} px={6}>Engineering</Button>
-                        <Button size="sm" rounded="full" variant="ghost" color="text.muted" _hover={{ color: "primary.500", bg: "primary.50" }} px={6}>Design</Button>
-                    </HStack>
-                </VStack>
-
-                {/* Timeline */}
-                <Box position="relative">
-                    {/* Vertical Line */}
-                    <Box
-                        position="absolute"
-                        left={{ base: "8", md: "50%" }}
-                        transform={{ base: "none", md: "translateX(-50%)" }}
-                        top="0"
-                        bottom="0"
-                        w="0.5"
-                        bgGradient="to-b"
-                        gradientFrom="primary.500"
-                        gradientTo="gray.200"
-                        _dark={{ gradientTo: "gray.800" }}
-                    />
-
-                    <VStack gap={16} align="stretch" position="relative" zIndex={10}>
-                        {experiences.map((exp, index) => (
-                            <Flex key={index} direction={{ base: "column", md: "row" }} align={{ base: "flex-start", md: "center" }} gap={8} position="relative" className="group">
-                                {/* Timeline Node */}
-                                <Box
-                                    position="absolute"
-                                    left={{ base: "8", md: "50%" }}
-                                    transform="translate(-50%, -50%)"
-                                    top={{ base: "2.5rem", md: "50%" }}
-                                    boxSize={exp.isCurrent ? "6" : "4"}
-                                    rounded="full"
-                                    bg={exp.isCurrent ? "primary.500" : "white"}
-                                    border="4px solid"
-                                    borderColor="primary.500"
-                                    shadow={exp.isCurrent ? "lg" : "none"}
-                                    zIndex={20}
-                                />
-
-                                {/* Date/Label Column */}
-                                <Box
-                                    w={{ base: "full", md: "50%" }}
-                                    textAlign={{ base: "left", md: index % 2 === 0 ? "right" : "left" }}
-                                    order={{ base: 1, md: index % 2 === 0 ? 1 : 2 }}
-                                    pl={{ base: 16, md: index % 2 === 0 ? 0 : 12 }}
-                                    pr={{ base: 0, md: index % 2 === 0 ? 12 : 0 }}
-                                >
-                                    <Heading fontSize="2xl" color="primary.500">{exp.isCurrent ? "Present" : exp.year.split(' - ')[1]}</Heading>
-                                    <Text color="text.muted" fontWeight="medium">{exp.year}</Text>
-                                    <HStack justify={{ base: "flex-start", md: index % 2 === 0 ? "flex-end" : "flex-start" }} color="text.muted" fontSize="sm" mt={1}>
-                                        <LuMapPin size={14} />
-                                        <Text>{exp.location}</Text>
-                                    </HStack>
+                <Container maxW="7xl" pt={{ base: 32, md: 40 }} pb={20} px={{ base: 4, sm: 6, lg: 8 }}>
+                    {/* Header */}
+                    <ScrollReveal width="100%">
+                        <VStack align="center" gap={6} mb={20} textAlign="center">
+                            <HStack gap={2} px={4} py={2} rounded="full" bg="primary.50" _dark={{ bg: "primary.900/20" }} color="primary.500" fontWeight="semibold" fontSize="sm">
+                                <Box position="relative" display="flex" h="2" w="2">
+                                    <Box as="span" animation="ping 1.5s infinite" position="absolute" inset={0} rounded="full" bg="primary.400" opacity={0.75} />
+                                    <Box as="span" position="relative" rounded="full" h="2" w="2" bg="primary.500" />
                                 </Box>
+                                <Text>Open to Opportunities</Text>
+                            </HStack>
+                            <Heading as="h1" fontSize={{ base: "4xl", md: "5xl" }} fontWeight="bold" color="text.primary" letterSpacing="tight">
+                                My Professional Journey
+                            </Heading>
+                            <Text fontSize="lg" color="text.secondary" maxW="3xl">
+                                Over 8 years of crafting high-performance web applications and intuitive user interfaces. A timeline of innovation, leadership, and technical mastery.
+                            </Text>
 
-                                {/* Card Column */}
-                                <Box
-                                    w={{ base: "full", md: "50%" }}
-                                    order={{ base: 2, md: index % 2 === 0 ? 2 : 1 }}
-                                    pl={{ base: 12, md: index % 2 === 0 ? 12 : 0 }}
-                                    pr={{ base: 0, md: index % 2 === 0 ? 0 : 12 }}
-                                >
-                                    <Box
-                                        bg="white"
-                                        _dark={{ bg: "gray.800", borderColor: exp.isCurrent ? "primary.900/30" : "transparent" }}
-                                        _hover={{ borderColor: "primary.300", shadow: "xl" }}
-                                        transition="all 0.3s"
-                                        position="relative"
-                                        overflow="hidden"
-                                    >
-                                        {exp.isCurrent && (
-                                            <Box position="absolute" top="0" right="0" bg="primary.500" color="white" fontSize="xs" fontWeight="bold" px={4} py={1.5} roundedBottom="lg">
-                                                Current Role
-                                            </Box>
-                                        )}
+                            {/* Category Filter */}
+                            <HStack p={1.5} bg="white" _dark={{ bg: "gray.800" }} rounded="full" border="1px solid" borderColor="border.subtle" shadow="sm">
+                                <Button size="sm" rounded="full" bg="primary.500" color="white" px={6}>All Roles</Button>
+                                <Button size="sm" rounded="full" variant="ghost" color="text.muted" _hover={{ color: "primary.500", bg: "primary.50" }} px={6}>Engineering</Button>
+                                <Button size="sm" rounded="full" variant="ghost" color="text.muted" _hover={{ color: "primary.500", bg: "primary.50" }} px={6}>Design</Button>
+                            </HStack>
+                        </VStack>
+                    </ScrollReveal>
 
-                                        <Flex align="center" gap={4} mb={6}>
-                                            <Box boxSize={16} p={2} rounded="xl" bg="gray.50" _dark={{ bg: "gray.900" }} border="1px solid" borderColor="border.subtle">
-                                                <Image src={exp.logo} alt={exp.company} objectFit="contain" w="full" h="full" rounded="lg" />
-                                            </Box>
-                                            <Box>
-                                                <Heading fontSize="xl" color="text.primary">{exp.role}</Heading>
-                                                <Text color="primary.500" fontWeight="semibold">{exp.company}</Text>
-                                            </Box>
-                                        </Flex>
+                    {/* Timeline */}
+                    <Box position="relative">
+                        {/* Vertical Line */}
+                        <Box
+                            position="absolute"
+                            left={{ base: "8", md: "50%" }}
+                            transform={{ base: "none", md: "translateX(-50%)" }}
+                            top="0"
+                            bottom="0"
+                            w="0.5"
+                            bgGradient="to-b"
+                            gradientFrom="primary.500"
+                            gradientTo="gray.200"
+                            _dark={{ gradientTo: "gray.800" }}
+                        />
 
-                                        <VStack align="flex-start" gap={4} mb={8}>
-                                            <Text color="text.secondary" fontSize="md" lineHeight="relaxed">
-                                                {exp.description}
-                                            </Text>
-                                            <VStack align="flex-start" gap={3}>
-                                                {exp.achievements.map((ach, i) => (
-                                                    <HStack key={i} align="flex-start" gap={3} color="text.primary" fontSize="sm">
-                                                        <Box mt={1} color="primary.500"><LuCircleCheck size={18} /></Box>
-                                                        <Text>{ach}</Text>
-                                                    </HStack>
-                                                ))}
-                                            </VStack>
-                                        </VStack>
+                        <VStack gap={16} align="stretch" position="relative" zIndex={10}>
+                            {experiences.map((exp, index) => (
+                                <ScrollReveal key={index} width="100%" transition={{ delay: index * 0.1 }}>
+                                    <Flex direction={{ base: "column", md: "row" }} align={{ base: "flex-start", md: "center" }} gap={8} position="relative" className="group">
+                                        {/* Timeline Node */}
+                                        <Box
+                                            position="absolute"
+                                            left={{ base: "8", md: "50%" }}
+                                            transform="translate(-50%, -50%)"
+                                            top={{ base: "2.5rem", md: "50%" }}
+                                            boxSize={exp.isCurrent ? "6" : "4"}
+                                            rounded="full"
+                                            bg={exp.isCurrent ? "primary.500" : "white"}
+                                            border="4px solid"
+                                            borderColor="primary.500"
+                                            shadow={exp.isCurrent ? "lg" : "none"}
+                                            zIndex={20}
+                                        />
 
-                                        <Separator mb={6} />
-
-                                        <VStack align="flex-start" gap={3}>
-                                            <Text fontSize="xs" fontWeight="bold" color="text.muted" textTransform="uppercase" letterSpacing="wider">Technologies</Text>
-                                            <HStack gap={2} flexWrap="wrap">
-                                                {exp.technologies.map((tech) => (
-                                                    <Badge key={tech} variant="subtle" bg="primary.50" _dark={{ bg: "primary.900/20" }} color="primary.600" px={3} py={1.5} rounded="full" textTransform="none">
-                                                        {tech}
-                                                    </Badge>
-                                                ))}
+                                        {/* Date/Label Column */}
+                                        <Box
+                                            w={{ base: "full", md: "50%" }}
+                                            textAlign={{ base: "left", md: index % 2 === 0 ? "right" : "left" }}
+                                            order={{ base: 1, md: index % 2 === 0 ? 1 : 2 }}
+                                            pl={{ base: 16, md: index % 2 === 0 ? 0 : 12 }}
+                                            pr={{ base: 0, md: index % 2 === 0 ? 12 : 0 }}
+                                        >
+                                            <Heading fontSize="2xl" color="primary.500">{exp.isCurrent ? "Present" : exp.year.split(' - ')[1]}</Heading>
+                                            <Text color="text.muted" fontWeight="medium">{exp.year}</Text>
+                                            <HStack justify={{ base: "flex-start", md: index % 2 === 0 ? "flex-end" : "flex-start" }} color="text.muted" fontSize="sm" mt={1}>
+                                                <LuMapPin size={14} />
+                                                <Text>{exp.location}</Text>
                                             </HStack>
-                                        </VStack>
-                                    </Box>
-                                </Box>
-                            </Flex>
-                        ))}
-                    </VStack>
-                </Box>
+                                        </Box>
 
-                {/* Call to Action */}
-                <Box mt={32} textAlign="center" py={20} borderTop="1px solid" borderColor="border.subtle">
-                    <Heading size="xl" mb={4} color="text.primary">Want to dive deeper?</Heading>
-                    <Text color="text.secondary" mb={8} maxW="2xl" mx="auto">
-                        Download my full resume to see more details about my projects, certifications, and educational background.
-                    </Text>
-                    <Button bg="primary.500" color="white" size="xl" px={10} h="auto" py={5} rounded="full" fontWeight="bold" shadow="lg" shadowColor="primary.200" _hover={{ bg: "primary.600", transform: "translateY(-2px)" }} transition="all 0.3s" gap={3}>
-                        <LuDownload size={22} /> Download Resume (PDF)
-                    </Button>
-                </Box>
-            </Container>
+                                        {/* Card Column */}
+                                        <Box
+                                            w={{ base: "full", md: "50%" }}
+                                            order={{ base: 2, md: index % 2 === 0 ? 2 : 1 }}
+                                            pl={{ base: 12, md: index % 2 === 0 ? 12 : 0 }}
+                                            pr={{ base: 0, md: index % 2 === 0 ? 0 : 12 }}
+                                        >
+                                            <Box
+                                                bg="white"
+                                                _dark={{ bg: "gray.800", borderColor: exp.isCurrent ? "primary.900/30" : "transparent" }}
+                                                _hover={{ borderColor: "primary.300", shadow: "xl" }}
+                                                transition="all 0.3s"
+                                                position="relative"
+                                                overflow="hidden"
+                                                p={6}
+                                                rounded="2xl"
+                                                border="1px solid"
+                                                borderColor="border.subtle"
+                                            >
+                                                {exp.isCurrent && (
+                                                    <Box position="absolute" top="0" right="0" bg="primary.500" color="white" fontSize="xs" fontWeight="bold" px={4} py={1.5} roundedBottom="lg" zIndex={10}>
+                                                        Current Role
+                                                    </Box>
+                                                )}
 
-            <Footer />
-        </Box>
+                                                <Flex align="center" gap={4} mb={6}>
+                                                    <Box boxSize={16} p={2} rounded="xl" bg="gray.50" _dark={{ bg: "gray.900" }} border="1px solid" borderColor="border.subtle">
+                                                        <Image src={exp.logo} alt={exp.company} objectFit="contain" w="full" h="full" rounded="lg" />
+                                                    </Box>
+                                                    <Box>
+                                                        <Heading fontSize="xl" color="text.primary">{exp.role}</Heading>
+                                                        <Text color="primary.500" fontWeight="semibold">{exp.company}</Text>
+                                                    </Box>
+                                                </Flex>
+
+                                                <VStack align="flex-start" gap={4} mb={8}>
+                                                    <Text color="text.secondary" fontSize="md" lineHeight="relaxed">
+                                                        {exp.description}
+                                                    </Text>
+                                                    <VStack align="flex-start" gap={3}>
+                                                        {exp.achievements.map((ach, i) => (
+                                                            <HStack key={i} align="flex-start" gap={3} color="text.primary" fontSize="sm">
+                                                                <Box mt={1} color="primary.500"><LuCircleCheck size={18} /></Box>
+                                                                <Text>{ach}</Text>
+                                                            </HStack>
+                                                        ))}
+                                                    </VStack>
+                                                </VStack>
+
+                                                <Separator mb={6} />
+
+                                                <VStack align="flex-start" gap={3}>
+                                                    <Text fontSize="xs" fontWeight="bold" color="text.muted" textTransform="uppercase" letterSpacing="wider">Technologies</Text>
+                                                    <HStack gap={2} flexWrap="wrap">
+                                                        {exp.technologies.map((tech) => (
+                                                            <Badge key={tech} variant="subtle" bg="primary.50" _dark={{ bg: "primary.900/20" }} color="primary.600" px={3} py={1.5} rounded="full" textTransform="none">
+                                                                {tech}
+                                                            </Badge>
+                                                        ))}
+                                                    </HStack>
+                                                </VStack>
+                                            </Box>
+                                        </Box>
+                                    </Flex>
+                                </ScrollReveal>
+                            ))}
+                        </VStack>
+                    </Box>
+
+                    {/* Call to Action */}
+                    <ScrollReveal width="100%">
+                        <Box mt={32} textAlign="center" py={20} borderTop="1px solid" borderColor="border.subtle">
+                            <Heading size="xl" mb={4} color="text.primary">Want to dive deeper?</Heading>
+                            <Text color="text.secondary" mb={8} maxW="2xl" mx="auto">
+                                Download my full resume to see more details about my projects, certifications, and educational background.
+                            </Text>
+                            <Button bg="primary.500" color="white" size="xl" px={10} h="auto" py={5} rounded="full" fontWeight="bold" shadow="lg" shadowColor="primary.200" _hover={{ bg: "primary.600", transform: "translateY(-2px)" }} transition="all 0.3s" gap={3}>
+                                <LuDownload size={22} /> Download Resume (PDF)
+                            </Button>
+                        </Box>
+                    </ScrollReveal>
+                </Container>
+
+                <Footer />
+            </Box>
+        </PageWrapper>
     );
 }

@@ -5,8 +5,9 @@ const customConfig = defineConfig({
   theme: {
     tokens: {
       fonts: {
-        heading: { value: 'Inter, system-ui, sans-serif' },
-        body: { value: 'Inter, system-ui, sans-serif' },
+        heading: { value: 'Space Grotesk, system-ui, sans-serif' },
+        body: { value: 'Space Grotesk, system-ui, sans-serif' },
+        display: { value: 'Space Grotesk, system-ui, sans-serif' },
         mono: { value: 'JetBrains Mono, monospace' },
       },
       fontWeights: {

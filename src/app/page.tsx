@@ -12,6 +12,8 @@ import { ScrollTrigger } from "gsap/ScrollTrigger";
 
 gsap.registerPlugin(ScrollTrigger);
 
+import PageWrapper from "@/components/PageWrapper";
+
 export default function Home() {
   const containerRef = useRef<HTMLDivElement>(null);
 
@@ -57,30 +59,32 @@ export default function Home() {
   }, []);
 
   return (
-    <main
-      ref={containerRef}
-      className="min-h-screen bg-background-light dark:bg-background-dark text-slate-800 dark:text-slate-100 font-display transition-colors duration-300 relative overflow-x-hidden"
-    >
-      {/* Decorative Blobs with Animation Classes */}
-      <div className="blob-bg -top-20 -left-20 blob-1"></div>
-      <div className="blob-bg top-40 -right-40 w-[800px] h-[800px] opacity-60 blob-2"></div>
+    <PageWrapper>
+      <main
+        ref={containerRef}
+        className="min-h-screen bg-background-light dark:bg-background-dark text-slate-800 dark:text-slate-100 font-display transition-colors duration-300 relative overflow-x-hidden"
+      >
+        {/* Decorative Blobs with Animation Classes */}
+        <div className="blob-bg -top-20 -left-20 blob-1"></div>
+        <div className="blob-bg top-40 -right-40 w-[800px] h-[800px] opacity-60 blob-2"></div>
 
-      <Navbar />
-      <Hero />
+        <Navbar />
+        <Hero />
 
-      <div className="reveal-section">
-        <About />
-      </div>
+        <div className="reveal-section">
+          <About />
+        </div>
 
-      <div className="reveal-section">
-        <Testimonials />
-      </div>
+        <div className="reveal-section">
+          <Testimonials />
+        </div>
 
-      <div className="reveal-section">
-        <Contact />
-      </div>
+        <div className="reveal-section">
+          <Contact />
+        </div>
 
-      <Footer />
-    </main>
+        <Footer />
+      </main>
+    </PageWrapper>
   );
 }

@@ -20,8 +20,11 @@ import Link from "next/link";
 import { LuSearch, LuExternalLink, LuChevronRight, LuArrowUpRight } from "react-icons/lu";
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
+import PageWrapper from "@/components/PageWrapper";
+import ScrollReveal from "@/components/ScrollReveal";
 
 const projects = [
+    // ... projects data ...
     {
         id: 1,
         title: "Vanguard Analytics",
@@ -74,158 +77,166 @@ const projects = [
 
 export default function ProjectsPage() {
     return (
-        <Box minH="screen" bg="background" pb={20}>
-            <Navbar />
+        <PageWrapper>
+            <Box minH="screen" bg="background" pb={20}>
+                <Navbar />
 
-            <Container maxW="7xl" pt={{ base: 32, md: 40 }} px={{ base: 4, sm: 6, lg: 8 }}>
-                {/* Page Header */}
-                <VStack align={{ base: "center", md: "start" }} gap={4} mb={12}>
-                    <Heading as="h1" fontSize={{ base: "3xl", md: "5xl" }} fontWeight="extrabold" color="text.primary" letterSpacing="tight">
-                        Projects Portfolio
-                    </Heading>
-                    <Text fontSize="lg" color="text.secondary" maxW="2xl" textAlign={{ base: "center", md: "left" }}>
-                        A selection of my recent work in Engineering and Design. From full-stack applications to intuitive mobile interfaces.
-                    </Text>
-                </VStack>
+                <Container maxW="7xl" pt={{ base: 32, md: 40 }} px={{ base: 4, sm: 6, lg: 8 }}>
+                    {/* Page Header */}
+                    <ScrollReveal width="100%">
+                        <VStack align={{ base: "center", md: "start" }} gap={4} mb={12}>
+                            <Heading as="h1" fontSize={{ base: "3xl", md: "5xl" }} fontWeight="extrabold" color="text.primary" letterSpacing="tight">
+                                Projects Portfolio
+                            </Heading>
+                            <Text fontSize="lg" color="text.secondary" maxW="2xl" textAlign={{ base: "center", md: "left" }}>
+                                A selection of my recent work in Engineering and Design. From full-stack applications to intuitive mobile interfaces.
+                            </Text>
+                        </VStack>
+                    </ScrollReveal>
 
-                {/* Filter & Search Bar */}
-                <Flex
-                    direction={{ base: "column", md: "row" }}
-                    justify="space-between"
-                    align="center"
-                    bg="white"
-                    _dark={{ bg: "gray.800" }}
-                    p={4}
-                    rounded="xl"
-                    shadow="sm"
-                    border="1px solid"
-                    borderColor="border.subtle"
-                    mb={10}
-                    gap={4}
-                >
-                    {/* Category Tabs */}
-                    <HStack overflowX="auto" pb={{ base: 2, md: 0 }} w={{ base: "full", md: "auto" }} gap={2} className="no-scrollbar">
-                        <Button size="sm" variant="solid" bg="primary.500" color="white" rounded="lg">All Projects</Button>
-                        <Button size="sm" variant="ghost" color="text.secondary" _hover={{ bg: "primary.50" }} rounded="lg">Web Development</Button>
-                        <Button size="sm" variant="ghost" color="text.secondary" _hover={{ bg: "primary.50" }} rounded="lg">Mobile Apps</Button>
-                        <Button size="sm" variant="ghost" color="text.secondary" _hover={{ bg: "primary.50" }} rounded="lg">UI/UX Design</Button>
-                    </HStack>
-
-                    {/* Search & Sort */}
-                    <HStack w={{ base: "full", md: "auto" }} gap={3}>
-                        <Box position="relative" w={{ base: "full", md: "64" }}>
-                            <Input
-                                placeholder="Search projects..."
-                                pl={10}
-                                size="md"
-                                rounded="lg"
-                                bg="gray.50"
-                                _dark={{ bg: "gray.900" }}
-                            />
-                            <Box position="absolute" left={3} top="50%" transform="translateY(-50%)" color="gray.400">
-                                <LuSearch />
-                            </Box>
-                        </Box>
-                        <Box position="relative" w={{ base: "full", md: "40" }}>
-                            <select
-                                style={{
-                                    width: '100%',
-                                    padding: '8px 40px 8px 16px',
-                                    borderRadius: '8px',
-                                    backgroundColor: 'white',
-                                    border: '1px solid #cbd5e1',
-                                    appearance: 'none',
-                                    fontSize: '14px',
-                                    cursor: 'pointer'
-                                }}
-                            >
-                                <option>Newest First</option>
-                                <option>Oldest First</option>
-                                <option>Alphabetical</option>
-                            </select>
-                            <Box position="absolute" right={3} top="50%" transform="translateY(-50%)" color="gray.400" pointerEvents="none">
-                                <LuChevronRight style={{ transform: 'rotate(90deg)' }} />
-                            </Box>
-                        </Box>
-                    </HStack>
-                </Flex>
-
-                {/* Projects Grid */}
-                <SimpleGrid columns={{ base: 1, md: 2, lg: 3 }} gap={8}>
-                    {projects.map((project) => (
-                        <Box
-                            key={project.id}
-                            className="group"
+                    {/* Filter & Search Bar */}
+                    <ScrollReveal width="100%" transition={{ delay: 0.4 }}>
+                        <Flex
+                            direction={{ base: "column", md: "row" }}
+                            justify="space-between"
+                            align="center"
                             bg="white"
                             _dark={{ bg: "gray.800" }}
+                            p={4}
                             rounded="xl"
-                            overflow="hidden"
+                            shadow="sm"
                             border="1px solid"
                             borderColor="border.subtle"
-                            _hover={{ borderColor: "primary.300", shadow: "xl" }}
-                            transition="all 0.3s"
-                            display="flex"
-                            flexDirection="column"
-                            h="full"
+                            mb={10}
+                            gap={4}
                         >
-                            <Box position="relative" overflow="hidden" aspectRatio={4 / 3}>
-                                <Image
-                                    src={project.image}
-                                    alt={project.title}
-                                    objectFit="cover"
-                                    w="full"
-                                    h="full"
-                                    transition="transform 0.5s"
-                                    _groupHover={{ transform: "scale(1.05)" }}
-                                />
-                                <Box position="absolute" top={4} left={4}>
-                                    <Badge bg="white/90" _dark={{ bg: "black/80" }} color="primary.500" px={2.5} py={1} rounded="md" shadow="sm">
-                                        {project.category}
-                                    </Badge>
+                            {/* Category Tabs */}
+                            <HStack overflowX="auto" pb={{ base: 2, md: 0 }} w={{ base: "full", md: "auto" }} gap={2} className="no-scrollbar">
+                                <Button size="sm" variant="solid" bg="primary.500" color="white" rounded="lg">All Projects</Button>
+                                <Button size="sm" variant="ghost" color="text.secondary" _hover={{ bg: "primary.50" }} rounded="lg">Web Development</Button>
+                                <Button size="sm" variant="ghost" color="text.secondary" _hover={{ bg: "primary.50" }} rounded="lg">Mobile Apps</Button>
+                                <Button size="sm" variant="ghost" color="text.secondary" _hover={{ bg: "primary.50" }} rounded="lg">UI/UX Design</Button>
+                            </HStack>
+
+                            {/* Search & Sort */}
+                            <HStack w={{ base: "full", md: "auto" }} gap={3}>
+                                <Box position="relative" w={{ base: "full", md: "64" }}>
+                                    <Input
+                                        placeholder="Search projects..."
+                                        pl={10}
+                                        size="md"
+                                        rounded="lg"
+                                        bg="gray.50"
+                                        _dark={{ bg: "gray.900" }}
+                                    />
+                                    <Box position="absolute" left={3} top="50%" transform="translateY(-50%)" color="gray.400">
+                                        <LuSearch />
+                                    </Box>
                                 </Box>
-                                <Box position="absolute" inset={0} bg="black/0" _groupHover={{ bg: "black/10" }} transition="all 0.3s" />
-                            </Box>
+                                <Box position="relative" w={{ base: "full", md: "40" }}>
+                                    <select
+                                        style={{
+                                            width: '100%',
+                                            padding: '8px 40px 8px 16px',
+                                            borderRadius: '8px',
+                                            backgroundColor: 'white',
+                                            border: '1px solid #cbd5e1',
+                                            appearance: 'none',
+                                            fontSize: '14px',
+                                            cursor: 'pointer'
+                                        }}
+                                    >
+                                        <option>Newest First</option>
+                                        <option>Oldest First</option>
+                                        <option>Alphabetical</option>
+                                    </select>
+                                    <Box position="absolute" right={3} top="50%" transform="translateY(-50%)" color="gray.400" pointerEvents="none">
+                                        <LuChevronRight style={{ transform: 'rotate(90deg)' }} />
+                                    </Box>
+                                </Box>
+                            </HStack>
+                        </Flex>
+                    </ScrollReveal>
 
-                            <Box p={6} flex="1" display="flex" flexDirection="column">
-                                <Heading size="md" mb={2} color="text.primary" _groupHover={{ color: "primary.500" }} transition="colors">
-                                    {project.title}
-                                </Heading>
-                                <Text fontSize="sm" color="text.secondary" mb={4} lineClamp={2}>
-                                    {project.description}
-                                </Text>
+                    {/* Projects Grid */}
+                    <ScrollReveal width="100%" transition={{ delay: 0.6 }}>
+                        <SimpleGrid columns={{ base: 1, md: 2, lg: 3 }} gap={8}>
+                            {projects.map((project) => (
+                                <Box
+                                    key={project.id}
+                                    className="group"
+                                    bg="white"
+                                    _dark={{ bg: "gray.800" }}
+                                    rounded="xl"
+                                    overflow="hidden"
+                                    border="1px solid"
+                                    borderColor="border.subtle"
+                                    _hover={{ borderColor: "primary.300", shadow: "xl" }}
+                                    transition="all 0.3s"
+                                    display="flex"
+                                    flexDirection="column"
+                                    h="full"
+                                >
+                                    <Box position="relative" overflow="hidden" aspectRatio={4 / 3}>
+                                        <Image
+                                            src={project.image}
+                                            alt={project.title}
+                                            objectFit="cover"
+                                            w="full"
+                                            h="full"
+                                            transition="transform 0.5s"
+                                            _groupHover={{ transform: "scale(1.05)" }}
+                                        />
+                                        <Box position="absolute" top={4} left={4}>
+                                            <Badge bg="white/90" _dark={{ bg: "black/80" }} color="primary.500" px={2.5} py={1} rounded="md" shadow="sm">
+                                                {project.category}
+                                            </Badge>
+                                        </Box>
+                                        <Box position="absolute" inset={0} bg="black/0" _groupHover={{ bg: "black/10" }} transition="all 0.3s" />
+                                    </Box>
 
-                                <HStack gap={2} mb={6} flexWrap="wrap">
-                                    {project.tags.map((tag) => (
-                                        <Badge key={tag} variant="subtle" colorScheme="gray" fontSize="xs" px={2} py={1} rounded="md">
-                                            {tag}
-                                        </Badge>
-                                    ))}
-                                </HStack>
+                                    <Box p={6} flex="1" display="flex" flexDirection="column">
+                                        <Heading size="md" mb={2} color="text.primary" _groupHover={{ color: "primary.500" }} transition="colors">
+                                            {project.title}
+                                        </Heading>
+                                        <Text fontSize="sm" color="text.secondary" mb={4} lineClamp={2}>
+                                            {project.description}
+                                        </Text>
 
-                                <HStack gap={3} mt="auto">
-                                    <Button asChild flex="1" variant="outline" size="sm" rounded="lg">
-                                        <Link href={`/projects/${project.id}`}>Details</Link>
-                                    </Button>
-                                    <Button flex="1" bg="primary.500" color="white" size="sm" rounded="lg" _hover={{ bg: "primary.600" }} gap={1}>
-                                        Live Demo <Icon as={LuArrowUpRight} fontSize="xs" />
-                                    </Button>
-                                </HStack>
-                            </Box>
-                        </Box>
-                    ))}
-                </SimpleGrid>
+                                        <HStack gap={2} mb={6} flexWrap="wrap">
+                                            {project.tags.map((tag) => (
+                                                <Badge key={tag} variant="subtle" colorScheme="gray" fontSize="xs" px={2} py={1} rounded="md">
+                                                    {tag}
+                                                </Badge>
+                                            ))}
+                                        </HStack>
 
-                {/* Pagination placeholder */}
-                <Flex mt={12} justify="center">
-                    <HStack gap={2}>
-                        <Button size="sm" variant="outline" rounded="lg" disabled>1</Button>
-                        <Button size="sm" variant="ghost" rounded="lg">2</Button>
-                        <Button size="sm" variant="ghost" rounded="lg">3</Button>
-                    </HStack>
-                </Flex>
-            </Container>
+                                        <HStack gap={3} mt="auto">
+                                            <Button asChild flex="1" variant="outline" size="sm" rounded="lg">
+                                                <Link href={`/projects/${project.id}`}>Details</Link>
+                                            </Button>
+                                            <Button flex="1" bg="primary.500" color="white" size="sm" rounded="lg" _hover={{ bg: "primary.600" }} gap={1}>
+                                                Live Demo <Icon as={LuArrowUpRight} fontSize="xs" />
+                                            </Button>
+                                        </HStack>
+                                    </Box>
+                                </Box>
+                            ))}
+                        </SimpleGrid>
+                    </ScrollReveal>
 
-            <Footer />
-        </Box>
+                    {/* Pagination placeholder */}
+                    <Flex mt={12} justify="center">
+                        <HStack gap={2}>
+                            <Button size="sm" variant="outline" rounded="lg" disabled>1</Button>
+                            <Button size="sm" variant="ghost" rounded="lg">2</Button>
+                            <Button size="sm" variant="ghost" rounded="lg">3</Button>
+                        </HStack>
+                    </Flex>
+                </Container>
+
+                <Footer />
+            </Box>
+        </PageWrapper>
     );
 }

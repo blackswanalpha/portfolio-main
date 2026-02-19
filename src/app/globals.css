@@ -6,8 +6,8 @@
   --color-background-light: #f6f7f8;
   --color-background-dark: #13191f;
 
-  --font-display: var(--font-inter);
-  --font-sans: var(--font-inter);
+  --font-display: var(--font-space-grotesk);
+  --font-sans: var(--font-space-grotesk);
 }
 
 :root {
