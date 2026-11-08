@@ -1,90 +1,45 @@
-"use client";
-
+/* Hallmark · pre-emit critique: P4 H4 E4 S4 R4 V4
+ * Hallmark · macrostructure: Split Studio · tone: soft · anchor hue: brand blue #2e6eb8 (~255°)
+ * theme: project brand tokens (Fraunces display, Space Grotesk text, src/theme) · nav + footer: layout-owned
+ * enrichment: desk photo (LCP) · photoreal Earth + studio still life in one shared WebGL context
+ * motion: one CSS entrance on the hero text · slow globe spin (static under reduced motion)
+ */
+import fs from "node:fs";
+import path from "node:path";
 import Navbar from "@/components/layout/Navbar";
-import Hero from "@/components/sections/Hero";
+import Footer from "@/components/layout/Footer";
+import Hero, { LocationBand } from "@/components/sections/Hero";
 import About from "@/components/sections/About";
+import Services from "@/components/sections/Services";
 import Testimonials from "@/components/sections/Testimonials";
 import Contact from "@/components/sections/Contact";
-import Footer from "@/components/layout/Footer";
-import { useLayoutEffect, useRef } from "react";
-import gsap from "gsap";
-import { ScrollTrigger } from "gsap/ScrollTrigger";
+import FeaturedProjects from "@/components/home/FeaturedProjects";
+import { RESUME_URL } from "@/components/home/format";
+import StageProvider from "@/components/three/stage/StageProvider";
 
-gsap.registerPlugin(ScrollTrigger);
+// Checked on the server (at build for a static page): the resume button only
+// renders when public/resume.pdf actually exists.
+const hasResume = fs.existsSync(path.join(process.cwd(), "public", RESUME_URL.replace(/^\//, "")));
 
-import PageWrapper from "@/components/PageWrapper";
-
+// Server component: the sections hydrate on their own, and nothing here hides
+// content behind JS. Every section reads live data client-side via useApi.
 export default function Home() {
-  const containerRef = useRef<HTMLDivElement>(null);
-
-  useLayoutEffect(() => {
-    const ctx = gsap.context(() => {
-      // Floating animation for decorative background blobs
-      gsap.to(".blob-1", {
-        x: "10%",
-        y: "15%",
-        duration: 15,
-        repeat: -1,
-        yoyo: true,
-        ease: "sine.inOut"
-      });
-
-      gsap.to(".blob-2", {
-        x: "-15%",
-        y: "10%",
-        duration: 20,
-        repeat: -1,
-        yoyo: true,
-        ease: "sine.inOut"
-      });
-
-      // Reveal animations for major sections
-      const sections = gsap.utils.toArray<HTMLElement>(".reveal-section");
-      sections.forEach((section) => {
-        gsap.from(section, {
-          y: 40,
-          opacity: 0,
-          duration: 1,
-          ease: "power3.out",
-          scrollTrigger: {
-            trigger: section,
-            start: "top 85%",
-            toggleActions: "play none none none"
-          }
-        });
-      });
-    }, containerRef);
-
-    return () => ctx.revert();
-  }, []);
-
-  return (
-    <PageWrapper>
-      <main
-        ref={containerRef}
-        className="min-h-screen bg-background-light dark:bg-background-dark text-slate-800 dark:text-slate-100 font-display transition-colors duration-300 relative overflow-x-hidden"
-      >
-        {/* Decorative Blobs with Animation Classes */}
-        <div className="blob-bg -top-20 -left-20 blob-1"></div>
-        <div className="blob-bg top-40 -right-40 w-[800px] h-[800px] opacity-60 blob-2"></div>
-
-        <Navbar />
-        <Hero />
-
-        <div className="reveal-section">
-          <About />
-        </div>
-
-        <div className="reveal-section">
-          <Testimonials />
-        </div>
-
-        <div className="reveal-section">
-          <Contact />
-        </div>
-
-        <Footer />
-      </main>
-    </PageWrapper>
-  );
+    return (
+        <>
+            <Navbar />
+            <StageProvider>
+                <main id="main" className="overflow-x-clip">
+                    <Hero />
+                    <About hasResume={hasResume} />
+                    <FeaturedProjects />
+                    <Services />
+                    <Testimonials />
+                    <Contact />
+                    {/* "Working from Nairobi" globe, below the FAQ at the end of Contact. */}
+                    <LocationBand />
+                </main>
+            </StageProvider>
+            <Footer />
+        </>
+    );
 }

@@ -1,34 +1,25 @@
 "use client";
 
 import React from "react";
-import ScrollReveal from "../ScrollReveal";
 
 interface StaggeredListProps {
     children: React.ReactNode[];
+    /** @deprecated Ignored. Items are no longer hidden until scrolled into view. */
     staggerDelay?: number;
+    /** @deprecated Ignored. */
     baseDelay?: number;
     width?: string;
     className?: string;
 }
 
-export const StaggeredList: React.FC<StaggeredListProps> = ({
-    children,
-    staggerDelay = 0.1,
-    baseDelay = 0.2,
-    width = "100%",
-    className = "",
-}) => {
+/**
+ * Formerly wrapped every child in a scroll-triggered fade, so items started
+ * invisible and could stay that way. It now lays the children out as-is.
+ */
+export const StaggeredList: React.FC<StaggeredListProps> = ({ children, width = "100%", className = "" }) => {
     return (
         <div className={className} style={{ width }}>
-            {React.Children.map(children, (child, index) => (
-                <ScrollReveal
-                    key={index}
-                    width="100%"
-                    transition={{ delay: baseDelay + index * staggerDelay }}
-                >
-                    {child}
-                </ScrollReveal>
-            ))}
+            {children}
         </div>
     );
 };

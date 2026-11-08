@@ -1,241 +1,384 @@
 "use client";
 
-import {
-    Box,
-    Container,
-    Heading,
-    Text,
-    Flex,
-    VStack,
-    HStack,
-    Image,
-    Badge,
-    Icon,
-    Button,
-    Separator,
-    Center,
-    SimpleGrid
-} from "@chakra-ui/react";
-import { LuBriefcase, LuCircleCheck, LuDownload, LuMapPin, LuCalendar } from "react-icons/lu";
+import { Box, Button, Container, Flex, Heading, HStack, Image, Skeleton, Text, VStack } from "@chakra-ui/react";
+import Link from "next/link";
+import { useMemo, useState } from "react";
+import { LuBriefcase, LuCircleCheck, LuMapPin } from "react-icons/lu";
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
-import PageWrapper from "@/components/PageWrapper";
-import ScrollReveal from "@/components/ScrollReveal";
+import PageWrapper, { PageEntrance } from "@/components/PageWrapper";
+import { EmptyState, ErrorState, errorMessage } from "@/components/ui/states";
+import { useApi } from "@/hooks/useApi";
+import { mediaUrl, type Paginated, type WorkExperience } from "@/lib/api";
+import { dateKey, yearOf } from "@/components/projects/shared";
 
-const experiences = [
-    // ...
-    {
-        year: "2022 - Now",
-        role: "Lead Full Stack Engineer",
-        company: "NexStream Solutions",
-        location: "Nairobi, Kenya",
-        description: "Spearheading the architectural migration of legacy systems to a microservices architecture. Leading a team of 8 developers to build scalable fintech solutions impacting 500k+ users daily.",
-        achievements: [
-            "Reduced server costs by 40% through optimized AWS Lambda implementations.",
-            "Designed and implemented a comprehensive Design System reducing UI dev time by 30%.",
-            "Mentored junior developers leading to 3 internal promotions within 12 months."
-        ],
-        technologies: ["React", "Node.js", "TypeScript", "AWS", "GraphQL", "Docker"],
-        isCurrent: true,
-        logo: "https://lh3.googleusercontent.com/aida-public/AB6AXuCIKxzpsyWlK9pGXYz9TJdlA6psz2FY4VuF8I70yrucXoHw7mxJ7nLoWIVq6d16-nkXSJYEq34bTH3b3yH2yYvdoLbr8E9UABj5ZhlvKGEB69cOb-uOpyOy64roBWNies7lWIRPd_7bwcO--yX19SWFdN7ZzoZCQ6-nyh2bWR2m1FI2hB-Sluuj9j8PtSZTJGv6Jcv0kNIRQziSUwMao73xHShnH5f4uX7-esR3cYpQfDwwHXJublqzEl_yb2QW5s0l1_oHxYNxeKz6"
-    },
-    {
-        year: "2019 - 2022",
-        role: "Senior UI/UX Designer",
-        company: "Elevate Digital",
-        location: "San Francisco, CA",
-        description: "Led the complete redesign of the agency's flagship e-commerce platform. Conducted user research, wireframing, and high-fidelity prototyping.",
-        achievements: [
-            "Increased conversion rates by 25% post-redesign.",
-            "Established accessibility standards (WCAG 2.1) across all client projects."
-        ],
-        technologies: ["Figma", "Adobe XD", "Prototyping", "User Research"],
-        logo: "https://lh3.googleusercontent.com/aida-public/AB6AXuDfPvttszUxMdozunzbBexhn3RhbGEgiwjVw7w5F2vIpbOA7tjfQMJkrV4bVzWQY6QSQZeNzFC50C4iD7F1_-gJW8NHuhcd1c9ArC5OLgvtQlcubnEGJfmriT57We53a4WXbrI4D-31fZ8SktNY49IO22DtaGPXnzYdzvpIQnthM8TPl6wWOVzyH5A48QTCAafb9xtFy8R9XZX3jSgOuiCxkUlhy1VujM6PZSkObpjjLa8gu6oF8PDN1eokFnPpCcinCgHlD8gTLv4B"
-    },
-    {
-        year: "2017 - 2019",
-        role: "Frontend Developer",
-        company: "StartUp Inc.",
-        location: "Remote",
-        description: "Developed responsive and interactive web applications for early-stage startups. Collaborated closely with backend engineers to integrate RESTful APIs.",
-        achievements: [
-            "Built the MVP for a logistics dashboard acquired for $2M.",
-            "Optimized page load times by 50% using modern bundling strategies."
-        ],
-        technologies: ["Vue.js", "SCSS", "Webpack", "Git"],
-        logo: "https://lh3.googleusercontent.com/aida-public/AB6AXuCYzJBkWpUyA7MYwDFRLQ0obuaDwJ9vJ3tzAhBZybl0eNXC2OhI9nmzZsxXo_z_liRQKjuzCWFsjh95AlWDuC4hxG8AXVQnPSVJsC2HN3Uy3cmpIbk_iRv1c8jWepQPCjch_ODHNlP_Djn9nAOnXvOvmP-EhXdGQlHEW4QKmO1dNRVWhI4au-l2clgniAoNKSfMnViSd12QEQrOY8EhsFMAN43eK_iKl8wuOM-Jfuf1zD-RVV24CoJimJBQMvhpZDxsFyBIstCaYeA4"
-    }
+type Filter = "all" | "current" | "past";
+
+const FILTERS: { value: Filter; label: string }[] = [
+    { value: "all", label: "All roles" },
+    { value: "current", label: "Current" },
+    { value: "past", label: "Past" },
 ];
 
+const EXPERIENCE_PATH = "/work-experience/?public_only=true&page_size=100";
+
+/** Map a backend WorkExperience onto what the timeline renders. */
+function toView(x: WorkExperience) {
+    const start = yearOf(x.start_date);
+    const end = x.is_current ? "Present" : yearOf(x.end_date) || "Present";
+    return {
+        id: x.id,
+        range: start ? `${start} – ${end}` : end,
+        endLabel: end,
+        role: x.position,
+        company: x.company,
+        location: x.location ?? "",
+        description: x.description ?? "",
+        achievements: x.responsibilities ?? [],
+        technologies: x.technologies ?? [],
+        isCurrent: x.is_current,
+        logo: mediaUrl(x.company_logo_url),
+    };
+}
+
 export default function ExperiencePage() {
+    const { data, error, loading, refreshing, reload } = useApi<Paginated<WorkExperience>>(EXPERIENCE_PATH);
+    const [filter, setFilter] = useState<Filter>("all");
+
+    const items = useMemo(
+        () =>
+            [...(data?.items ?? [])].sort(
+                (a, b) => a.order - b.order || dateKey(b.start_date).localeCompare(dateKey(a.start_date))
+            ),
+        [data]
+    );
+
+    const filtered = items
+        .filter((x) => (filter === "all" ? true : filter === "current" ? x.is_current : !x.is_current))
+        .map(toView);
+
     return (
         <PageWrapper>
-            <Box minH="screen" bg="background">
+            <Box minH="100vh" bg="background">
                 <Navbar />
 
-                <Container maxW="7xl" pt={{ base: 32, md: 40 }} pb={20} px={{ base: 4, sm: 6, lg: 8 }}>
-                    {/* Header */}
-                    <ScrollReveal width="100%">
-                        <VStack align="center" gap={6} mb={20} textAlign="center">
-                            <HStack gap={2} px={4} py={2} rounded="full" bg="primary.50" _dark={{ bg: "primary.900/20" }} color="primary.500" fontWeight="semibold" fontSize="sm">
-                                <Box position="relative" display="flex" h="2" w="2">
-                                    <Box as="span" animation="ping 1.5s infinite" position="absolute" inset={0} rounded="full" bg="primary.400" opacity={0.75} />
-                                    <Box as="span" position="relative" rounded="full" h="2" w="2" bg="primary.500" />
-                                </Box>
-                                <Text>Open to Opportunities</Text>
-                            </HStack>
-                            <Heading as="h1" fontSize={{ base: "4xl", md: "5xl" }} fontWeight="bold" color="text.primary" letterSpacing="tight">
-                                My Professional Journey
+                <PageEntrance as="main">
+                    <Container maxW="7xl" pt={{ base: 32, md: 40 }} pb={20} px={{ base: 4, sm: 6, lg: 8 }}>
+                        {/* Header */}
+                        <VStack align="center" gap={6} mb={{ base: 14, md: 20 }} textAlign="center">
+                            <Heading as="h1" textStyle="pageTitle" color="text.primary">
+                                My professional journey
                             </Heading>
-                            <Text fontSize="lg" color="text.secondary" maxW="3xl">
-                                Over 8 years of crafting high-performance web applications and intuitive user interfaces. A timeline of innovation, leadership, and technical mastery.
+                            <Text textStyle="lead" color="text.secondary" maxW="3xl">
+                                Crafting high-performance web applications and intuitive user interfaces. A timeline of
+                                innovation, leadership, and technical mastery.
                             </Text>
 
-                            {/* Category Filter */}
-                            <HStack p={1.5} bg="white" _dark={{ bg: "gray.800" }} rounded="full" border="1px solid" borderColor="border.subtle" shadow="sm">
-                                <Button size="sm" rounded="full" bg="primary.500" color="white" px={6}>All Roles</Button>
-                                <Button size="sm" rounded="full" variant="ghost" color="text.muted" _hover={{ color: "primary.500", bg: "primary.50" }} px={6}>Engineering</Button>
-                                <Button size="sm" rounded="full" variant="ghost" color="text.muted" _hover={{ color: "primary.500", bg: "primary.50" }} px={6}>Design</Button>
+                            {/* Filter */}
+                            <HStack role="group" aria-label="Filter roles" p={1} bg="surface" rounded="md" borderWidth="1px" borderColor="border">
+                                {FILTERS.map((f) => {
+                                    const active = filter === f.value;
+                                    return (
+                                        <Button
+                                            key={f.value}
+                                            size="sm"
+                                            rounded="md"
+                                            px={5}
+                                            variant="ghost"
+                                            aria-pressed={active}
+                                            bg={active ? "primary.500" : "transparent"}
+                                            color={active ? "white" : "text.secondary"}
+                                            _hover={active ? { bg: "primary.600" } : { color: "text.primary", bg: "blackAlpha.50" }}
+                                            _active={active ? { bg: "primary.700" } : { bg: "blackAlpha.100" }}
+                                            onClick={() => setFilter(f.value)}
+                                        >
+                                            {f.label}
+                                        </Button>
+                                    );
+                                })}
                             </HStack>
                         </VStack>
-                    </ScrollReveal>
 
-                    {/* Timeline */}
-                    <Box position="relative">
-                        {/* Vertical Line */}
-                        <Box
-                            position="absolute"
-                            left={{ base: "8", md: "50%" }}
-                            transform={{ base: "none", md: "translateX(-50%)" }}
-                            top="0"
-                            bottom="0"
-                            w="0.5"
-                            bgGradient="to-b"
-                            gradientFrom="primary.500"
-                            gradientTo="gray.200"
-                            _dark={{ gradientTo: "gray.800" }}
-                        />
+                        {/* Timeline */}
+                        {loading ? (
+                            <TimelineSkeleton />
+                        ) : error ? (
+                            <ErrorState
+                                title="Couldn't load the experience timeline"
+                                description={errorMessage(error)}
+                                onRetry={reload}
+                                retrying={refreshing}
+                            />
+                        ) : items.length === 0 ? (
+                            <EmptyState
+                                icon={<LuBriefcase />}
+                                title="No experience to show yet"
+                                description="Roles will appear here once they're published."
+                                action={
+                                    <Button asChild size="sm" variant="outline" rounded="md">
+                                        <Link href="/projects">Browse projects</Link>
+                                    </Button>
+                                }
+                            />
+                        ) : filtered.length === 0 ? (
+                            <EmptyState
+                                icon={<LuBriefcase />}
+                                title={filter === "current" ? "No current roles" : "No past roles"}
+                                description="Switch the filter to see the rest of the timeline."
+                                action={
+                                    <Button size="sm" variant="outline" rounded="md" onClick={() => setFilter("all")}>
+                                        Show all roles
+                                    </Button>
+                                }
+                            />
+                        ) : (
+                            <Box position="relative">
+                                {/* Spine */}
+                                <Box
+                                    position="absolute"
+                                    left={{ base: "8", md: "50%" }}
+                                    transform={{ base: "none", md: "translateX(-50%)" }}
+                                    top="0"
+                                    bottom="0"
+                                    w="1px"
+                                    bg="blackAlpha.200"
+                                    aria-hidden="true"
+                                />
 
-                        <VStack gap={16} align="stretch" position="relative" zIndex={10}>
-                            {experiences.map((exp, index) => (
-                                <ScrollReveal key={index} width="100%" transition={{ delay: index * 0.1 }}>
-                                    <Flex direction={{ base: "column", md: "row" }} align={{ base: "flex-start", md: "center" }} gap={8} position="relative" className="group">
-                                        {/* Timeline Node */}
-                                        <Box
-                                            position="absolute"
-                                            left={{ base: "8", md: "50%" }}
-                                            transform="translate(-50%, -50%)"
-                                            top={{ base: "2.5rem", md: "50%" }}
-                                            boxSize={exp.isCurrent ? "6" : "4"}
-                                            rounded="full"
-                                            bg={exp.isCurrent ? "primary.500" : "white"}
-                                            border="4px solid"
-                                            borderColor="primary.500"
-                                            shadow={exp.isCurrent ? "lg" : "none"}
-                                            zIndex={20}
-                                        />
-
-                                        {/* Date/Label Column */}
-                                        <Box
-                                            w={{ base: "full", md: "50%" }}
-                                            textAlign={{ base: "left", md: index % 2 === 0 ? "right" : "left" }}
-                                            order={{ base: 1, md: index % 2 === 0 ? 1 : 2 }}
-                                            pl={{ base: 16, md: index % 2 === 0 ? 0 : 12 }}
-                                            pr={{ base: 0, md: index % 2 === 0 ? 12 : 0 }}
-                                        >
-                                            <Heading fontSize="2xl" color="primary.500">{exp.isCurrent ? "Present" : exp.year.split(' - ')[1]}</Heading>
-                                            <Text color="text.muted" fontWeight="medium">{exp.year}</Text>
-                                            <HStack justify={{ base: "flex-start", md: index % 2 === 0 ? "flex-end" : "flex-start" }} color="text.muted" fontSize="sm" mt={1}>
-                                                <LuMapPin size={14} />
-                                                <Text>{exp.location}</Text>
-                                            </HStack>
-                                        </Box>
-
-                                        {/* Card Column */}
-                                        <Box
-                                            w={{ base: "full", md: "50%" }}
-                                            order={{ base: 2, md: index % 2 === 0 ? 2 : 1 }}
-                                            pl={{ base: 12, md: index % 2 === 0 ? 12 : 0 }}
-                                            pr={{ base: 0, md: index % 2 === 0 ? 0 : 12 }}
-                                        >
-                                            <Box
-                                                bg="white"
-                                                _dark={{ bg: "gray.800", borderColor: exp.isCurrent ? "primary.900/30" : "transparent" }}
-                                                _hover={{ borderColor: "primary.300", shadow: "xl" }}
-                                                transition="all 0.3s"
+                                <VStack as="ol" gap={16} align="stretch" position="relative">
+                                    {filtered.map((exp, index) => {
+                                        const left = index % 2 === 0;
+                                        return (
+                                            <Flex
+                                                as="li"
+                                                key={exp.id}
+                                                direction={{ base: "column", md: "row" }}
+                                                align={{ base: "flex-start", md: "center" }}
+                                                gap={8}
                                                 position="relative"
-                                                overflow="hidden"
-                                                p={6}
-                                                rounded="2xl"
-                                                border="1px solid"
-                                                borderColor="border.subtle"
                                             >
-                                                {exp.isCurrent && (
-                                                    <Box position="absolute" top="0" right="0" bg="primary.500" color="white" fontSize="xs" fontWeight="bold" px={4} py={1.5} roundedBottom="lg" zIndex={10}>
-                                                        Current Role
-                                                    </Box>
-                                                )}
+                                                {/* Node */}
+                                                <Box
+                                                    position="absolute"
+                                                    left={{ base: "8", md: "50%" }}
+                                                    transform="translate(-50%, -50%)"
+                                                    top={{ base: "2.5rem", md: "50%" }}
+                                                    boxSize="3"
+                                                    rounded="full"
+                                                    bg={exp.isCurrent ? "primary.500" : "surface"}
+                                                    borderWidth="2px"
+                                                    borderColor="primary.500"
+                                                    zIndex={1}
+                                                    aria-hidden="true"
+                                                />
 
-                                                <Flex align="center" gap={4} mb={6}>
-                                                    <Box boxSize={16} p={2} rounded="xl" bg="gray.50" _dark={{ bg: "gray.900" }} border="1px solid" borderColor="border.subtle">
-                                                        <Image src={exp.logo} alt={exp.company} objectFit="contain" w="full" h="full" rounded="lg" />
-                                                    </Box>
-                                                    <Box>
-                                                        <Heading fontSize="xl" color="text.primary">{exp.role}</Heading>
-                                                        <Text color="primary.500" fontWeight="semibold">{exp.company}</Text>
-                                                    </Box>
-                                                </Flex>
-
-                                                <VStack align="flex-start" gap={4} mb={8}>
-                                                    <Text color="text.secondary" fontSize="md" lineHeight="relaxed">
-                                                        {exp.description}
+                                                {/* Dates */}
+                                                <Box
+                                                    w={{ base: "full", md: "50%" }}
+                                                    textAlign={{ base: "left", md: left ? "right" : "left" }}
+                                                    order={{ base: 1, md: left ? 1 : 2 }}
+                                                    pl={{ base: 16, md: left ? 0 : 12 }}
+                                                    pr={{ base: 0, md: left ? 12 : 0 }}
+                                                >
+                                                    <Text fontFamily="serif" fontSize="2xl" fontWeight={600} lineHeight="1.2" color="text.primary">
+                                                        {exp.endLabel}
                                                     </Text>
-                                                    <VStack align="flex-start" gap={3}>
-                                                        {exp.achievements.map((ach, i) => (
-                                                            <HStack key={i} align="flex-start" gap={3} color="text.primary" fontSize="sm">
-                                                                <Box mt={1} color="primary.500"><LuCircleCheck size={18} /></Box>
-                                                                <Text>{ach}</Text>
-                                                            </HStack>
-                                                        ))}
-                                                    </VStack>
-                                                </VStack>
+                                                    <Text textStyle="meta" color="text.muted" mt={1}>
+                                                        {exp.range}
+                                                    </Text>
+                                                    {exp.location && (
+                                                        <HStack
+                                                            justify={{ base: "flex-start", md: left ? "flex-end" : "flex-start" }}
+                                                            gap={1.5}
+                                                            color="text.muted"
+                                                            fontSize="sm"
+                                                            mt={1}
+                                                        >
+                                                            <LuMapPin size={14} aria-hidden="true" />
+                                                            <Text>{exp.location}</Text>
+                                                        </HStack>
+                                                    )}
+                                                </Box>
 
-                                                <Separator mb={6} />
+                                                {/* Card */}
+                                                <Box
+                                                    w={{ base: "full", md: "50%" }}
+                                                    order={{ base: 2, md: left ? 2 : 1 }}
+                                                    pl={{ base: 12, md: left ? 12 : 0 }}
+                                                    pr={{ base: 0, md: left ? 0 : 12 }}
+                                                >
+                                                    <Box bg="surface" p={6} rounded="2xl" borderWidth="1px" borderColor="border">
+                                                        <Flex align="center" gap={4} mb={5}>
+                                                            <Flex
+                                                                boxSize={14}
+                                                                flexShrink={0}
+                                                                p={2}
+                                                                rounded="xl"
+                                                                bg="background"
+                                                                borderWidth="1px"
+                                                                borderColor="border"
+                                                                align="center"
+                                                                justify="center"
+                                                                color="text.muted"
+                                                            >
+                                                                {exp.logo ? (
+                                                                    <Image src={exp.logo} alt="" objectFit="contain" w="full" h="full" rounded="md" />
+                                                                ) : (
+                                                                    <LuBriefcase size={22} aria-hidden="true" />
+                                                                )}
+                                                            </Flex>
+                                                            <Box minW={0}>
+                                                                <Heading as="h2" textStyle="cardTitle" color="text.primary">
+                                                                    {exp.role}
+                                                                </Heading>
+                                                                <HStack gap={2} flexWrap="wrap" mt={0.5}>
+                                                                    <Text fontWeight={500} color="text.secondary">
+                                                                        {exp.company}
+                                                                    </Text>
+                                                                    {exp.isCurrent && (
+                                                                        <Text
+                                                                            as="span"
+                                                                            fontSize="xs"
+                                                                            fontWeight={500}
+                                                                            color="primary.700"
+                                                                            bg="primary.50"
+                                                                            px={2}
+                                                                            py={0.5}
+                                                                            rounded="md"
+                                                                        >
+                                                                            Current role
+                                                                        </Text>
+                                                                    )}
+                                                                </HStack>
+                                                            </Box>
+                                                        </Flex>
 
-                                                <VStack align="flex-start" gap={3}>
-                                                    <Text fontSize="xs" fontWeight="bold" color="text.muted" textTransform="uppercase" letterSpacing="wider">Technologies</Text>
-                                                    <HStack gap={2} flexWrap="wrap">
-                                                        {exp.technologies.map((tech) => (
-                                                            <Badge key={tech} variant="subtle" bg="primary.50" _dark={{ bg: "primary.900/20" }} color="primary.600" px={3} py={1.5} rounded="full" textTransform="none">
-                                                                {tech}
-                                                            </Badge>
-                                                        ))}
-                                                    </HStack>
-                                                </VStack>
-                                            </Box>
-                                        </Box>
-                                    </Flex>
-                                </ScrollReveal>
-                            ))}
-                        </VStack>
-                    </Box>
+                                                        {(exp.description || exp.achievements.length > 0) && (
+                                                            <VStack align="flex-start" gap={4}>
+                                                                {exp.description && (
+                                                                    <Text textStyle="body" color="text.secondary">
+                                                                        {exp.description}
+                                                                    </Text>
+                                                                )}
+                                                                {exp.achievements.length > 0 && (
+                                                                    <VStack as="ul" align="flex-start" gap={3}>
+                                                                        {exp.achievements.map((ach, i) => (
+                                                                            <HStack as="li" key={i} align="flex-start" gap={3} color="text.primary" fontSize="sm">
+                                                                                <Box mt={0.5} color="text.muted" flexShrink={0}>
+                                                                                    <LuCircleCheck size={16} aria-hidden="true" />
+                                                                                </Box>
+                                                                                <Text>{ach}</Text>
+                                                                            </HStack>
+                                                                        ))}
+                                                                    </VStack>
+                                                                )}
+                                                            </VStack>
+                                                        )}
 
-                    {/* Call to Action */}
-                    <ScrollReveal width="100%">
-                        <Box mt={32} textAlign="center" py={20} borderTop="1px solid" borderColor="border.subtle">
-                            <Heading size="xl" mb={4} color="text.primary">Want to dive deeper?</Heading>
-                            <Text color="text.secondary" mb={8} maxW="2xl" mx="auto">
-                                Download my full resume to see more details about my projects, certifications, and educational background.
+                                                        {exp.technologies.length > 0 && (
+                                                            <Box borderTopWidth="1px" borderColor="border" mt={6} pt={5}>
+                                                                <Text textStyle="label" color="text.muted" mb={3}>
+                                                                    Technologies
+                                                                </Text>
+                                                                <Flex gap={2} flexWrap="wrap">
+                                                                    {exp.technologies.map((tech) => (
+                                                                        <Box
+                                                                            key={tech}
+                                                                            px={3}
+                                                                            py={1}
+                                                                            fontSize="xs"
+                                                                            fontWeight={500}
+                                                                            color="text.secondary"
+                                                                            borderWidth="1px"
+                                                                            borderColor="border"
+                                                                            rounded="md"
+                                                                        >
+                                                                            {tech}
+                                                                        </Box>
+                                                                    ))}
+                                                                </Flex>
+                                                            </Box>
+                                                        )}
+                                                    </Box>
+                                                </Box>
+                                            </Flex>
+                                        );
+                                    })}
+                                </VStack>
+                            </Box>
+                        )}
+
+                        {/* Call to action. There is no resume file to download yet, so it
+                            points at the contact form instead of a dead button. */}
+                        <Box mt={{ base: 20, md: 32 }} textAlign="center" py={{ base: 14, md: 20 }} borderTopWidth="1px" borderColor="border">
+                            <Heading as="h2" textStyle="sectionTitle" color="text.primary" mb={4}>
+                                Want to dive deeper?
+                            </Heading>
+                            <Text textStyle="lead" color="text.secondary" mb={8} maxW="2xl" mx="auto">
+                                Get in touch for my full resume, with more detail on my projects, certifications, and educational
+                                background.
                             </Text>
-                            <Button bg="primary.500" color="white" size="xl" px={10} h="auto" py={5} rounded="full" fontWeight="bold" shadow="lg" shadowColor="primary.200" _hover={{ bg: "primary.600", transform: "translateY(-2px)" }} transition="all 0.3s" gap={3}>
-                                <LuDownload size={22} /> Download Resume (PDF)
+                            <Button
+                                asChild
+                                size="lg"
+                                rounded="md"
+                                px={8}
+                                bg="primary.500"
+                                color="white"
+                                _hover={{ bg: "primary.600" }}
+                                _active={{ bg: "primary.700" }}
+                            >
+                                <Link href="/#contact">Get in touch</Link>
                             </Button>
                         </Box>
-                    </ScrollReveal>
-                </Container>
+                    </Container>
+                </PageEntrance>
 
                 <Footer />
             </Box>
         </PageWrapper>
+    );
+}
+
+/** Two timeline rows in their loaded proportions. */
+function TimelineSkeleton() {
+    return (
+        <VStack gap={16} align="stretch" aria-busy="true" aria-label="Loading experience">
+            {[0, 1].map((i) => {
+                const left = i % 2 === 0;
+                return (
+                    <Flex key={i} direction={{ base: "column", md: "row" }} align={{ base: "flex-start", md: "center" }} gap={8}>
+                        <Box
+                            w={{ base: "full", md: "50%" }}
+                            order={{ base: 1, md: left ? 1 : 2 }}
+                            pl={{ base: 16, md: left ? 0 : 12 }}
+                            pr={{ base: 0, md: left ? 12 : 0 }}
+                        >
+                            <VStack align={{ base: "flex-start", md: left ? "flex-end" : "flex-start" }} gap={2}>
+                                <Skeleton h="7" w="24" />
+                                <Skeleton h="4" w="28" />
+                            </VStack>
+                        </Box>
+                        <Box
+                            w={{ base: "full", md: "50%" }}
+                            order={{ base: 2, md: left ? 2 : 1 }}
+                            pl={{ base: 12, md: left ? 12 : 0 }}
+                            pr={{ base: 0, md: left ? 0 : 12 }}
+                        >
+                            <Box bg="surface" p={6} rounded="2xl" borderWidth="1px" borderColor="border">
+                                <Flex align="center" gap={4} mb={5}>
+                                    <Skeleton boxSize={14} rounded="xl" />
+                                    <VStack align="stretch" gap={2} flex="1">
+                                        <Skeleton h="5" w="60%" />
+                                        <Skeleton h="4" w="40%" />
+                                    </VStack>
+                                </Flex>
+                                <Skeleton h="16" w="full" />
+                            </Box>
+                        </Box>
+                    </Flex>
+                );
+            })}
+        </VStack>
     );
 }

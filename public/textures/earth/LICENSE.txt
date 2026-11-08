@@ -1,0 +1,46 @@
+Earth textures for the home page globe (src/components/sections/Hero3DBackground.tsx)
+=====================================================================================
+
+All four textures are derived from NASA imagery that is in the public domain
+(NASA material is not subject to copyright in the United States). No
+attribution is legally required; credit is given here as a courtesy.
+
+Sources were downloaded from Wikimedia Commons, where each file carries a
+"Public domain" licence tag, on 2026-11-08.
+
+earth-day-2k.jpg (colour / albedo)
+  Source:  "Whole world - land and oceans.jpg"
+           https://commons.wikimedia.org/wiki/File:Whole_world_-_land_and_oceans.jpg
+  Origin:  NASA Earth Observatory / NASA Goddard Space Flight Center, Blue Marble
+           (Visible Earth). Public domain.
+  Changes: resized to 2048x1024; open-ocean pixels (from the land/water mask
+           below) lifted slightly toward a deeper blue so the oceans read under
+           the physically based lighting.
+
+earth-bump-2k.jpg (relief, used as a bump map)
+  Source:  "Srtm ramp2.world.21600x10800.jpg"
+           https://commons.wikimedia.org/wiki/File:Srtm_ramp2.world.21600x10800.jpg
+  Origin:  Reto Stöckli, NASA Earth Observatory (Blue Marble topography, SRTM).
+           https://visibleearth.nasa.gov/view.php?id=73934  Public domain.
+  Changes: resized to 2048x1024; levels stretched so sea level is black.
+
+earth-roughness-2k.jpg (water/land mask driving roughness)
+  Source:  "Land shallow topo alpha 2048.png" (alpha channel only)
+           https://commons.wikimedia.org/wiki/File:Land_shallow_topo_alpha_2048.png
+  Origin:  NASA Goddard Space Flight Center, Blue Marble land surface
+           (Reto Stöckli, Robert Simmon). Public domain.
+  Changes: alpha channel remapped to roughness values (water 0.50, land 0.90).
+
+earth-night-2k.jpg (city lights, emissive on the night side only)
+  Source:  "Earth's City Lights by DMSP, 1994-1995 (large).jpg"
+           https://commons.wikimedia.org/wiki/File:Earth%27s_City_Lights_by_DMSP,_1994-1995_(large).jpg
+  Origin:  Data: Marc Imhoff (NASA GSFC), Christopher Elvidge (NOAA NGDC);
+           image: Craig Mayhew and Robert Simmon (NASA GSFC).
+           https://visibleearth.nasa.gov/view.php?id=55167  Public domain.
+  Changes: resized to 2048x1024; blue land base removed so only the lights remain.
+
+No cloud layer is included: no public-domain cloud map was reachable when the
+textures were made.
+
+The poster still at public/images/home/globe-poster.webp is an offline render
+of the same scene with these textures.

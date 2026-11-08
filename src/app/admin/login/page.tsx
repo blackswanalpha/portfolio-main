@@ -1,238 +1,295 @@
 "use client";
 
 import Link from "next/link";
-import {
-    Box,
-    Container,
-    Flex,
-    Heading,
-    Text,
-    VStack,
-    HStack,
-    Icon,
-    Button,
-    Input,
-    Checkbox
-} from "@chakra-ui/react";
-import { ColorModeButton } from "@/components/ui/color-mode";
-import {
-    LuMail,
-    LuLock,
-    LuEye,
-    LuShieldCheck,
-    LuArrowLeft,
-    LuLogIn,
-    LuCode
-} from "react-icons/lu";
-import PageWrapper from "@/components/PageWrapper";
-import ScrollReveal from "@/components/ScrollReveal";
+import { useEffect, useRef, useState, useSyncExternalStore } from "react";
+import { useRouter } from "next/navigation";
+import { z } from "zod";
+import toast from "react-hot-toast";
+import { Box, Button, Flex, Heading, Input, Spinner, Text, VStack } from "@chakra-ui/react";
+import { LuArrowLeft, LuCircleAlert, LuEye, LuEyeOff, LuLock, LuMail } from "react-icons/lu";
+import { api, ApiError } from "@/lib/api";
+import { useAuthStore } from "@/store/auth";
+import { errorMessage } from "@/components/ui/states";
+import { CheckboxField, FormField, Panel, TrackedForm, controlProps, primaryButton } from "@/components/admin/AdminUI";
+
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+const loginSchema = z
+    .object({
+        identifier: z.string().trim().min(1, "Enter your email or username"),
+        password: z.string().min(1, "Enter your password"),
+    })
+    .superRefine((val, ctx) => {
+        // Only enforce email formatting when the identifier looks like an email.
+        if (val.identifier.includes("@") && !EMAIL_RE.test(val.identifier)) {
+            ctx.addIssue({ code: "custom", path: ["identifier"], message: "Enter a valid email address" });
+        }
+    });
+
+type FieldErrors = { identifier?: string; password?: string };
+type LoginError = { title: string; message: string };
+
+const emptySubscribe = () => () => {};
+
+function describeLoginError(err: unknown): LoginError {
+    if (err instanceof ApiError) {
+        if (/locked/i.test(err.message)) {
+            return { title: "Account locked", message: `${err.message}. Wait a few minutes, then try again.` };
+        }
+        if (err.status === 401) return { title: "Couldn't sign you in", message: err.message || "Invalid credentials" };
+        if (err.status === 429) return { title: "Too many attempts", message: err.message || "Wait a minute, then try again." };
+        return { title: "Couldn't sign you in", message: err.message || "Something went wrong. Try again." };
+    }
+    return { title: "Can't reach the server", message: errorMessage(err) };
+}
 
 export default function LoginPage() {
+    const router = useRouter();
+    const setAuth = useAuthStore((s) => s.setAuth);
+    const token = useAuthStore((s) => s.token);
+    // False during SSR and the hydration render (zustand serves the
+    // non-persisted initial state then), true afterwards. Only trust `token`
+    // once this is true.
+    const checked = useSyncExternalStore(emptySubscribe, () => true, () => false);
+
+    const [identifier, setIdentifier] = useState("");
+    const [password, setPassword] = useState("");
+    const [showPassword, setShowPassword] = useState(false);
+    const [remember, setRemember] = useState(true);
+    const [error, setError] = useState<LoginError | null>(null);
+    const [fieldErrors, setFieldErrors] = useState<FieldErrors>({});
+    const [loading, setLoading] = useState(false);
+    const submitting = useRef(false);
+
+    const signedIn = checked && !!token;
+
+    // Already signed in: go straight to the dashboard. Skipped while a submit is
+    // in flight, because handleSubmit navigates itself once the login resolves.
+    useEffect(() => {
+        if (signedIn && !submitting.current) router.replace("/admin");
+    }, [signedIn, router]);
+
+    const handleSubmit = async (e: React.FormEvent) => {
+        e.preventDefault();
+        if (submitting.current) return;
+        setError(null);
+
+        const parsed = loginSchema.safeParse({ identifier, password });
+        if (!parsed.success) {
+            const fe: FieldErrors = {};
+            for (const issue of parsed.error.issues) {
+                const key = issue.path[0] as keyof FieldErrors | undefined;
+                if (key && !fe[key]) fe[key] = issue.message;
+            }
+            setFieldErrors(fe);
+            return;
+        }
+        setFieldErrors({});
+
+        const id = parsed.data.identifier;
+        submitting.current = true;
+        setLoading(true);
+        try {
+            const { access_token } = await api.login(id, password);
+            setAuth(access_token, { username: id }, remember);
+
+            // Verify the token and store the full user (best effort).
+            let name = id;
+            try {
+                const u = await api.me();
+                setAuth(access_token, u, remember);
+                name = u.full_name || u.username || name;
+            } catch {
+                /* the token already works; skip enrichment */
+            }
+
+            toast.success(`Signed in as ${name}`);
+            router.push("/admin");
+            // Keep the button in its loading state until the route changes.
+        } catch (err) {
+            setError(describeLoginError(err));
+            submitting.current = false;
+            setLoading(false);
+        }
+    };
+
+    const handleForgotPassword = () => {
+        toast("Contact the site administrator to reset your password.");
+    };
+
     return (
-        <PageWrapper>
-            <Box
-                minH="100vh"
-                bg="background.light"
-                _dark={{ bg: "background.dark" }}
-                display="flex"
-                alignItems="center"
-                justifyContent="center"
-                p="4"
-                position="relative"
-                overflow="hidden"
-                fontFamily="display"
-                transition="colors"
-                transitionDuration="300ms"
-            >
-                {/* Mesh Background Effect */}
-                <Box position="fixed" inset="0" pointerEvents="none" zIndex="0" overflow="hidden">
-                    <Box position="absolute" top="0" left="0" w="full" h="full" opacity="0.5" _dark={{ opacity: "0.2" }} mixBlendMode="overlay">
-                        <Box
-                            position="absolute"
-                            top="0"
-                            left="0"
-                            w="full"
-                            h="full"
-                            bg="radial-gradient(at 0% 0%, hsla(212, 85%, 90%, 1) 0, transparent 50%), radial-gradient(at 50% 0%, hsla(212, 85%, 96%, 1) 0, transparent 50%), radial-gradient(at 100% 0%, hsla(212, 85%, 90%, 1) 0, transparent 50%)"
-                            _dark={{
-                                bg: "radial-gradient(at 0% 0%, hsla(212, 85%, 12%, 1) 0, transparent 50%), radial-gradient(at 50% 0%, hsla(212, 85%, 8%, 1) 0, transparent 50%), radial-gradient(at 100% 0%, hsla(212, 85%, 12%, 1) 0, transparent 50%)"
-                            }}
-                        />
+        <Flex minH="100vh" bg="background" align="center" justify="center" px={4} py={12}>
+            <Box as="main" w="full" maxW="md">
+                <VStack gap={3} mb={6} textAlign="center">
+                    <Flex
+                        w={10}
+                        h={10}
+                        rounded="lg"
+                        bg="primary.500"
+                        color="white"
+                        align="center"
+                        justify="center"
+                        fontWeight={600}
+                        fontSize="lg"
+                        aria-hidden
+                    >
+                        V
+                    </Flex>
+                    <Box>
+                        <Text fontWeight={600} color="text.primary">
+                            Victor Mbugua
+                        </Text>
+                        <Text fontSize="sm" color="text.secondary">
+                            Portfolio CMS
+                        </Text>
                     </Box>
-                </Box>
+                </VStack>
 
-                <Box position="fixed" top="4" right="4" zIndex="50">
-                    <ColorModeButton />
-                </Box>
+                <Panel p={{ base: 6, md: 8 }} boxShadow="sm">
+                    <Heading as="h1" textStyle="adminTitle" color="text.primary" mb={6}>
+                        Admin portal access
+                    </Heading>
 
-                {/* Main Container */}
-                <Box as="main" w="full" maxW="md" position="relative" zIndex="10">
-                    {/* Logo & Brand Header */}
-                    <ScrollReveal width="100%">
-                        <VStack textAlign="center" mb="8" gap={1}>
-                            <Box
-                                display="inline-flex"
-                                alignItems="center"
-                                justifyContent="center"
-                                w="12"
-                                h="12"
-                                rounded="xl"
-                                bg="primary.50"
-                                _dark={{ bg: "primary.900" }}
-                                color="primary.500"
-                                mb="4"
-                            >
-                                <Icon as={LuCode} boxSize={6} />
-                            </Box>
-                            <Heading size="xl" fontWeight="bold" letterSpacing="tight" color="text.primary" _dark={{ color: "text.dark.primary" }}>
-                                Victor Mbugua
-                            </Heading>
-                            <Text color="text.muted" _dark={{ color: "text.dark.muted" }} fontSize="sm" fontWeight="medium" letterSpacing="wide">
-                                PORTFOLIO CMS
+                    {signedIn && !loading ? (
+                        <Flex align="center" gap={3} py={6} role="status" aria-live="polite">
+                            <Spinner size="sm" color="primary.500" />
+                            <Text fontSize="sm" color="text.secondary">
+                                You&apos;re already signed in. Opening the dashboard
                             </Text>
-                        </VStack>
-                    </ScrollReveal>
+                        </Flex>
+                    ) : (
+                        <TrackedForm onSubmit={handleSubmit}>
+                            <VStack gap={5} align="stretch">
+                                {error ? (
+                                    <Flex
+                                        role="alert"
+                                        gap={2.5}
+                                        align="flex-start"
+                                        px={4}
+                                        py={3}
+                                        rounded="lg"
+                                        bg="red.50"
+                                        border="1px solid"
+                                        borderColor="red.200"
+                                        color="red.800"
+                                        fontSize="sm"
+                                    >
+                                        <Box as="span" mt="2px" flexShrink={0} aria-hidden>
+                                            <LuCircleAlert />
+                                        </Box>
+                                        <Box>
+                                            <Text fontWeight={500}>{error.title}</Text>
+                                            <Text>{error.message}</Text>
+                                        </Box>
+                                    </Flex>
+                                ) : null}
 
-                    {/* Login Card */}
-                    <ScrollReveal width="100%" transition={{ delay: 0.2 }}>
-                        <Box
-                            bg="surface.light"
-                            _dark={{ bg: "surface.dark", shadow: "none", borderColor: "border.dark" }}
-                            rounded="xl"
-                            shadow="xl"
-                            border="1px solid"
-                            borderColor="border.light"
-                            overflow="hidden"
-                            position="relative"
-                        >
-                            {/* Decorative Top Line */}
-                            <Box h="1" w="full" bgGradient="to-r" gradientFrom="transparent" gradientVia="primary.500" gradientTo="transparent" opacity="0.7" />
-
-                            <Box p="8">
-                                <HStack gap={2} mb="6" color="text.primary" _dark={{ color: "text.dark.primary" }}>
-                                    <Icon as={LuShieldCheck} color="primary.500" boxSize={5} />
-                                    <Heading size="md" fontWeight="semibold">Admin Portal Access</Heading>
-                                </HStack>
-
-                                <form action="#" onSubmit={(e) => e.preventDefault()}>
-                                    <VStack gap={6} align="stretch">
-                                        {/* Email Field */}
-                                        <VStack align="flex-start" gap={1}>
-                                            <Text as="label" fontSize="sm" fontWeight="medium" color="text.secondary" _dark={{ color: "text.dark.secondary" }}>Email Address</Text>
-                                            <Box position="relative" w="full">
-                                                <Box position="absolute" insetY="0" left="0" pl="3" display="flex" alignItems="center" pointerEvents="none" zIndex="1">
-                                                    <Icon as={LuMail} color="text.muted" _dark={{ color: "text.dark.muted" }} boxSize={5} />
-                                                </Box>
-                                                <Input
-                                                    pl="10"
-                                                    py="2.5"
-                                                    bg="background.light"
-                                                    _dark={{ bg: "background.dark", borderColor: "border.dark" }}
-                                                    borderColor="border.light"
-                                                    rounded="lg"
-                                                    _focus={{ ring: "2", ringColor: "primary.500/20", borderColor: "primary.500" }}
-                                                    placeholder="admin@victormbugua.com"
-                                                    required
-                                                    type="email"
-                                                />
-                                            </Box>
-                                        </VStack>
-
-                                        {/* Password Field */}
-                                        <VStack align="flex-start" gap={1}>
-                                            <Text as="label" fontSize="sm" fontWeight="medium" color="text.secondary" _dark={{ color: "text.dark.secondary" }}>Password</Text>
-                                            <Box position="relative" w="full">
-                                                <Box position="absolute" insetY="0" left="0" pl="3" display="flex" alignItems="center" pointerEvents="none" zIndex="1">
-                                                    <Icon as={LuLock} color="text.muted" _dark={{ color: "text.dark.muted" }} boxSize={5} />
-                                                </Box>
-                                                <Input
-                                                    pl="10"
-                                                    pr="10"
-                                                    py="2.5"
-                                                    bg="background.light"
-                                                    _dark={{ bg: "background.dark", borderColor: "border.dark" }}
-                                                    borderColor="border.light"
-                                                    rounded="lg"
-                                                    _focus={{ ring: "2", ringColor: "primary.500/20", borderColor: "primary.500" }}
-                                                    placeholder="••••••••"
-                                                    required
-                                                    type="password"
-                                                />
-                                                <Button
-                                                    position="absolute"
-                                                    insetY="0"
-                                                    right="0"
-                                                    variant="ghost"
-                                                    color="text.muted"
-                                                    _dark={{ color: "text.dark.muted", _hover: { color: "text.dark.primary" } }}
-                                                    _hover={{ color: "text.primary", bg: "transparent" }}
-                                                    px="3"
-                                                >
-                                                    <Icon as={LuEye} boxSize={5} />
-                                                </Button>
-                                            </Box>
-                                        </VStack>
-
-                                        {/* Remember Me & Forgot Password Row */}
-                                        <Flex align="center" justify="space-between" pt="1">
-                                            <HStack gap={2}>
-                                                <Checkbox.Root id="remember-me">
-                                                    <Checkbox.HiddenInput />
-                                                    <Checkbox.Control>
-                                                        <Checkbox.Indicator />
-                                                    </Checkbox.Control>
-                                                    <Checkbox.Label fontSize="sm" color="text.secondary" _dark={{ color: "text.dark.secondary" }} cursor="pointer" userSelect="none">
-                                                        Remember this device
-                                                    </Checkbox.Label>
-                                                </Checkbox.Root>
-                                            </HStack>
-                                            <Link href="#" className="text-sm font-medium text-primary-500 hover:text-primary-600 transition-colors">
-                                                Forgot password?
-                                            </Link>
+                                <FormField label="Email or username" error={fieldErrors.identifier}>
+                                    <Box position="relative" w="full">
+                                        <Flex position="absolute" insetY={0} left={3} align="center" pointerEvents="none" color="text.muted" zIndex={1} aria-hidden>
+                                            <LuMail size={16} />
                                         </Flex>
+                                        <Input
+                                            {...controlProps}
+                                            pl={9}
+                                            placeholder="you@example.com"
+                                            type="text"
+                                            autoComplete="username"
+                                            autoCapitalize="none"
+                                            spellCheck={false}
+                                            value={identifier}
+                                            onChange={(e) => setIdentifier(e.target.value)}
+                                            disabled={loading}
+                                        />
+                                    </Box>
+                                </FormField>
 
-                                        {/* Submit Button */}
+                                <FormField label="Password" error={fieldErrors.password}>
+                                    <Box position="relative" w="full">
+                                        <Flex position="absolute" insetY={0} left={3} align="center" pointerEvents="none" color="text.muted" zIndex={1} aria-hidden>
+                                            <LuLock size={16} />
+                                        </Flex>
+                                        <Input
+                                            {...controlProps}
+                                            pl={9}
+                                            pr={11}
+                                            type={showPassword ? "text" : "password"}
+                                            autoComplete="current-password"
+                                            value={password}
+                                            onChange={(e) => setPassword(e.target.value)}
+                                            disabled={loading}
+                                        />
                                         <Button
-                                            size="lg"
-                                            bg="primary.500"
-                                            _hover={{ bg: "primary.600", shadow: "lg" }}
-                                            color="white"
-                                            rounded="lg"
-                                            shadow="sm"
-                                            fontWeight="medium"
-                                            transition="all"
-                                            display="flex"
-                                            alignItems="center"
-                                            justifyContent="center"
-                                            gap={2}
-                                            type="submit"
+                                            type="button"
+                                            position="absolute"
+                                            top="50%"
+                                            right={1}
+                                            transform="translateY(-50%)"
+                                            size="xs"
+                                            variant="ghost"
+                                            rounded="md"
+                                            zIndex={1}
+                                            color="text.secondary"
+                                            focusRingColor="primary.500"
+                                            _hover={{ bg: "gray.100", color: "text.primary" }}
+                                            onClick={() => setShowPassword((v) => !v)}
+                                            aria-label={showPassword ? "Hide password" : "Show password"}
+                                            aria-pressed={showPassword}
                                         >
-                                            <Icon as={LuLogIn} boxSize={5} />
-                                            Secure Login
+                                            {showPassword ? <LuEyeOff /> : <LuEye />}
                                         </Button>
-                                    </VStack>
-                                </form>
-                            </Box>
+                                    </Box>
+                                </FormField>
 
-                            {/* Bottom Card Footer (Security Badge) */}
-                            <Box bg="background.light" _dark={{ bg: "background.dark", borderTopColor: "border.dark" }} px="8" py="4" borderTop="1px solid" borderColor="border.light">
-                                <HStack justify="center" gap={1} color="text.muted" _dark={{ color: "text.dark.muted" }}>
-                                    <Icon as={LuShieldCheck} boxSize={4} />
-                                    <Text fontSize="xs">256-bit SSL Encrypted Connection</Text>
-                                </HStack>
-                            </Box>
-                        </Box>
-                    </ScrollReveal>
+                                <Flex align="center" justify="space-between" gap={3} wrap="wrap">
+                                    <CheckboxField checked={remember} onChange={setRemember} disabled={loading}>
+                                        Remember this device
+                                    </CheckboxField>
+                                    <Button
+                                        type="button"
+                                        variant="plain"
+                                        onClick={handleForgotPassword}
+                                        h="auto"
+                                        p={0}
+                                        minW={0}
+                                        fontSize="sm"
+                                        fontWeight={500}
+                                        color="primary.600"
+                                        focusRingColor="primary.500"
+                                        _hover={{ color: "primary.700", textDecoration: "underline" }}
+                                    >
+                                        Forgot password?
+                                    </Button>
+                                </Flex>
 
-                    {/* Back Link */}
-                    <Box mt="8" textAlign="center">
-                        <Link href="/" className="group inline-flex items-center text-sm font-medium text-slate-500 hover:text-slate-900 transition-colors">
-                            <Icon as={LuArrowLeft} mr="1" transition="transform" transitionDuration="200ms" _groupHover={{ transform: "translateX(-4px)" }} />
-                            Back to Portfolio
+                                <Button type="submit" size="lg" {...primaryButton} loading={loading} loadingText="Signing in">
+                                    Log in
+                                </Button>
+                            </VStack>
+                        </TrackedForm>
+                    )}
+                </Panel>
+
+                <Flex justify="center" mt={6}>
+                    <Box
+                        asChild
+                        display="inline-flex"
+                        alignItems="center"
+                        gap={1.5}
+                        fontSize="sm"
+                        fontWeight={500}
+                        color="text.secondary"
+                        rounded="md"
+                        transition="color 0.15s ease-out"
+                        _hover={{ color: "text.primary" }}
+                    >
+                        <Link href="/">
+                            <LuArrowLeft aria-hidden />
+                            Back to portfolio
                         </Link>
                     </Box>
-                </Box>
+                </Flex>
             </Box>
-        </PageWrapper>
+        </Flex>
     );
 }
