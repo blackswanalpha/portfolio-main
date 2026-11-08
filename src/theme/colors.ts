@@ -13,36 +13,24 @@ export const colors = {
   },
   background: {
     light: '#f6f7f8',
-    dark: '#13191f',
   },
   surface: {
     light: '#ffffff',
-    dark: '#1a2129',
   },
   text: {
     light: {
       primary: '#1a202c',
       secondary: '#4a5568',
-      muted: '#718096',
-    },
-    dark: {
-      primary: '#f7fafc',
-      secondary: '#e2e8f0',
-      muted: '#a0aec0',
+      muted: '#5f6b7a', // ≥4.5:1 on #f6f7f8 and white (was #718096 ≈ 3.7–4.0:1)
     },
   },
   border: {
     light: 'rgba(0, 0, 0, 0.08)',
-    dark: 'rgba(255, 255, 255, 0.08)',
   },
   glass: {
     light: {
       background: 'rgba(255, 255, 255, 0.7)',
       border: 'rgba(255, 255, 255, 0.3)',
-    },
-    dark: {
-      background: 'rgba(26, 33, 41, 0.7)',
-      border: 'rgba(255, 255, 255, 0.1)',
     },
   },
 }

@@ -1,0 +1,29 @@
+Camera 01 (Poly Haven)
+======================
+
+Model:    "Camera 01" by Rajil Jose Macatangay
+Page:     https://polyhaven.com/a/Camera_01
+Licence:  CC0 1.0 Universal (public domain dedication)
+          https://creativecommons.org/publicdomain/zero/1.0/
+          https://polyhaven.com/license
+Fetched:  2026-11-08 from https://api.polyhaven.com/files/Camera_01 (gltf, 1k)
+
+Files
+  Camera_01_1k.gltf, Camera_01.bin, textures/*.jpg
+      The original 1k glTF download, unchanged, at its original relative paths.
+  camera_01.glb
+      What the site loads. Made from the files above with
+      `npx @gltf-transform/cli@4 optimize ... --compress meshopt
+      --texture-compress webp --texture-size 1024 --simplify false`
+      (meshopt-compressed geometry, WebP textures, same materials).
+      2.44 MB -> 0.94 MB.
+
+At runtime the lens material (KHR_materials_transmission) is swapped for an
+opaque coated-glass material so no transmission pass is needed.
+
+Poly Haven flags this asset with a trademark note: the model is CC0, but the
+real-world product design it depicts may be protected. It is used here as a
+generic vintage rangefinder prop.
+
+The poster still at public/images/home/hobbies-poster.webp is an offline
+render of this model with the procedural headphones and dumbbell.

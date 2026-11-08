@@ -2,241 +2,378 @@
 
 import {
     Box,
-    Container,
-    Heading,
-    Text,
-    SimpleGrid,
-    Image,
-    Badge,
-    Flex,
-    HStack,
     Button,
-    VStack,
+    Container,
+    Flex,
+    Grid,
+    GridItem,
+    Heading,
+    HStack,
+    Image,
     Input,
-    Icon,
-    Link as ChakraLink
+    LinkBox,
+    LinkOverlay,
+    Skeleton,
+    Text,
+    VStack,
+    chakra,
 } from "@chakra-ui/react";
 import Link from "next/link";
-import { LuSearch, LuExternalLink, LuChevronRight, LuArrowUpRight } from "react-icons/lu";
+import { useMemo, useState } from "react";
+import { LuArrowRight, LuArrowUpRight, LuFolderOpen, LuSearch } from "react-icons/lu";
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
-import PageWrapper from "@/components/PageWrapper";
-import ScrollReveal from "@/components/ScrollReveal";
+import PageWrapper, { PageEntrance } from "@/components/PageWrapper";
+import { EmptyState, ErrorState, errorMessage } from "@/components/ui/states";
+import { useApi } from "@/hooks/useApi";
+import { mediaUrl, type Paginated, type Project, type ProjectCategory } from "@/lib/api";
+import { CATEGORY_LABEL, matchesQuery, sortProjects, timelineLabel, type SortKey } from "@/components/projects/shared";
+import { CARD_HOVER, ProjectCard, ProjectCardSkeleton } from "@/components/projects/ProjectCard";
 
-const projects = [
-    // ... projects data ...
-    {
-        id: 1,
-        title: "Vanguard Analytics",
-        category: "Full Stack",
-        description: "A comprehensive SaaS dashboard for visualizing marketing data with real-time reporting features.",
-        tags: ["React", "Node.js", "D3.js"],
-        image: "https://lh3.googleusercontent.com/aida-public/AB6AXuDFhrWvygCiEiBVZEk7Kq_oPya7gS3cd3-GjI8SFsRYqwOMj0kKG0MXVIZTa2sKMTFkpbqgK4rJhlZ6-U-mkRsc01l2Eyv7iAVYxIYy2XNNnQ6oZCm7TCoqsppV1-at0FbsQrP-QTj7HRpLyTjIJ8ZVAoXaHgpjhfSKkJi9JXk8j-gnqFOcmExnZqI4UBD8GsyqgLbuaEpjPi-KSQlzPRfMNc9s0XuNUJGBfi21mAzScxb8SCAVHVXKr0P9yThMuB5pxoJjKoXLgKjF",
-    },
-    {
-        id: 2,
-        title: "FitTrack Pro",
-        category: "Mobile App",
-        description: "A cross-platform fitness tracking application with social features and personalized workout plans.",
-        tags: ["Flutter", "Firebase", "Dart"],
-        image: "https://lh3.googleusercontent.com/aida-public/AB6AXuC1Uhas6WbEG9Qq-jQGVR9hHF5c7G39tJuIVsSeBMb-Ey0GeFzjzwAkbeyA4q05ILx4jpiFkVmkxbRGJFZNoCcS8tlh2plpcbxVim7ooR0yhoS3DMvukQ_8z_yCoz7HuqiN4ClhxdpzmjrbrMFVdKK-W0W06RlyZXJivsRxgqujhoozILnCEXuU2YNl3ABsKvwzfEAiVDnU9Cbq-8nU-h7sOMY2zUk2oy6HhoxpEtfm8IJqvfS2h2elecXjhwEZGILQ8280rp8Vw0Gk",
-    },
-    {
-        id: 3,
-        title: "NeoBank System",
-        category: "UI/UX Design",
-        description: "A complete design system and high-fidelity prototype for a next-generation digital banking platform.",
-        tags: ["Figma", "Design System"],
-        image: "https://lh3.googleusercontent.com/aida-public/AB6AXuBEgvXzqNcuiL3C3w0K_qsil5LjNhhuyt93zrrG8FSMtekP7OHYYyX1S27zkDW3Wm0mfDrDpw5VwL7rnBJWS3yX8grpsbb5nKfwXheDgFAcdeyUCpwTRY4VDisX2y9CuyKTMlwwtOaPBwmqfIbSlVTTqKlJmpzfZ4gKwtnTLcFXomGqmBmHYfS1unJbVq6UCFCnVr1CTlm3O4w39c7PoQ6C9tYktaL1CgYNaB0MI6yHfCSoOYemWOnBF2KJT6GTYYSR61Yc1O5lb8Jm",
-    },
-    {
-        id: 4,
-        title: "TaskFlow Enterprise",
-        category: "Web App",
-        description: "Collaborative project management tool designed for remote teams with real-time sync.",
-        tags: ["Vue.js", "Supabase", "Tailwind"],
-        image: "https://lh3.googleusercontent.com/aida-public/AB6AXuB6buFbSEIk-VXe8uLP11sMJagyFNs4LqeYFQ-pLpywPYNnGUO2GbhaJOtpNYCA31QqOiOGxyNOJwOSJXWEykPKT7RxVtdriMcMZCRRLKrFA9AkHGhHJrRRnbcBKH3CO-z9C29BKTV-RHhhLrPxKXOIB7TUBWDNC-sac6i19cZubwOFd-3Ul7UaLS7WmnzIG6vMjpVMFTTbvWo8yPb4tRMky9m0Ek7EEqQnhA0euwJrrqsDkSYbhmVWK4qYxPFlAl9syhOaaY-YcMMy",
-    },
-    {
-        id: 5,
-        title: "Brew Master",
-        category: "E-Commerce",
-        description: "Headless e-commerce solution for a specialty coffee roaster, featuring subscription management.",
-        tags: ["Next.js", "Shopify", "GraphQL"],
-        image: "https://lh3.googleusercontent.com/aida-public/AB6AXuBKBeW9ZZBv0V5AiZfzXby2kWusTcrNcjE3gqQnNDtsExeIRjSzgfJXksCO13u_xymWnQeUKnFW5viqd1O9sJgxtK8YHFJijVK9orh4Lmh3om-DqC5_ZxVAHyMgjE6l45mBOpg8i4174pEFGSgcfrrUp5B_Hr0EUXLA2OMJmPgBpRBBkB3yGNj_GjBAGA5e1n-6go0fIsO5_6LQEvY6zNp8t9sK_bwkJnfHAA4mXZGPB0O41B5Nwy2W7Lnhshs3nRQtz41FaWBRnJNE",
-    },
-    {
-        id: 6,
-        title: "Neural Art Gen",
-        category: "Experimental",
-        description: "A web interface leveraging Stable Diffusion to generate art assets for game developers.",
-        tags: ["Python", "Flask", "React"],
-        image: "https://lh3.googleusercontent.com/aida-public/AB6AXuDVsDusDOKMlB9emUM4KC3wk__fWaUSWzlB0I6XjBJr5r8czJ-p-TajqjuL0zX1FAU0MGw9ZTs8uwlfMHiQhqMY1MYi7JkGcgSNqnceCiDj5WB7VzsiqZcTDMkzkIyIY8fLwdFymk-Xh7ZOItZUNiBS-IIzLuSE_tgivbn97kCc-ZrcbjoY6QQTOrhi0L303rLnHkABi1Km0bCnIy6zXTouFbEinZfAeh8zGu_XKD_jKPdixOfaDJb-NWBx3wxzdB4Fpm9bESODznKP",
-    },
-];
+const PROJECTS_PATH = "/projects/?published_only=true&page_size=100";
+
+/** Alternating 7/5 rhythm on large screens. */
+const spanFor = (i: number) => (i % 4 === 0 || i % 4 === 3 ? 7 : 5);
 
 export default function ProjectsPage() {
+    const { data, error, loading, refreshing, reload } = useApi<Paginated<Project>>(PROJECTS_PATH);
+    const [category, setCategory] = useState<ProjectCategory | "all">("all");
+    const [query, setQuery] = useState("");
+    const [sort, setSort] = useState<SortKey>("newest");
+
+    const projects = useMemo(() => data?.items ?? [], [data]);
+
+    // Only offer tabs for categories that exist in the data.
+    const categories = useMemo(() => Array.from(new Set(projects.map((p) => p.category))), [projects]);
+
+    const visible = useMemo(
+        () =>
+            sortProjects(
+                projects.filter((p) => (category === "all" || p.category === category) && matchesQuery(p, query)),
+                sort
+            ),
+        [projects, category, query, sort]
+    );
+
+    const totalViews = useMemo(() => projects.reduce((sum, p) => sum + p.view_count, 0), [projects]);
+
+    // The spotlight only anchors the unfiltered index; any filter collapses it into the grid.
+    const showSpotlight = category === "all" && query.trim() === "";
+    const spotlight = showSpotlight ? visible.find((p) => p.featured) ?? visible[0] ?? null : null;
+    const gridItems = spotlight ? visible.filter((p) => p.id !== spotlight.id) : visible;
+
+    const resetFilters = () => {
+        setCategory("all");
+        setQuery("");
+        setSort("newest");
+    };
+
+    const ready = !loading && !error && data !== undefined;
+
     return (
         <PageWrapper>
-            <Box minH="screen" bg="background" pb={20}>
+            <Box minH="100vh" bg="background">
                 <Navbar />
 
-                <Container maxW="7xl" pt={{ base: 32, md: 40 }} px={{ base: 4, sm: 6, lg: 8 }}>
-                    {/* Page Header */}
-                    <ScrollReveal width="100%">
-                        <VStack align={{ base: "center", md: "start" }} gap={4} mb={12}>
-                            <Heading as="h1" fontSize={{ base: "3xl", md: "5xl" }} fontWeight="extrabold" color="text.primary" letterSpacing="tight">
-                                Projects Portfolio
-                            </Heading>
-                            <Text fontSize="lg" color="text.secondary" maxW="2xl" textAlign={{ base: "center", md: "left" }}>
-                                A selection of my recent work in Engineering and Design. From full-stack applications to intuitive mobile interfaces.
-                            </Text>
-                        </VStack>
-                    </ScrollReveal>
+                <PageEntrance as="main">
+                    <Container maxW="7xl" pt={{ base: 32, md: 40 }} pb={20} px={{ base: 4, sm: 6, lg: 8 }}>
+                        {/* Masthead */}
+                        <Box borderBottomWidth="1px" borderColor="border" pb={{ base: 8, md: 10 }} mb={{ base: 6, md: 8 }}>
+                            <Flex
+                                direction={{ base: "column", md: "row" }}
+                                justify="space-between"
+                                align={{ base: "flex-start", md: "flex-end" }}
+                                gap={6}
+                            >
+                                <Box>
+                                    <Heading as="h1" textStyle="pageTitle" color="text.primary">
+                                        Projects portfolio
+                                    </Heading>
+                                    <Text textStyle="lead" color="text.secondary" maxW="2xl" mt={4}>
+                                        A selection of my recent work in engineering and design — from full-stack applications to
+                                        intuitive mobile interfaces.
+                                    </Text>
+                                </Box>
+                                {/* Fixed height so the counts don't shift the masthead when they arrive. */}
+                                <Box minH="5" flexShrink={0}>
+                                    {ready ? (
+                                        <Text textStyle="meta" color="text.muted">
+                                            {projects.length} {projects.length === 1 ? "project" : "projects"} ·{" "}
+                                            {totalViews.toLocaleString("en-US")} {totalViews === 1 ? "view" : "views"}
+                                        </Text>
+                                    ) : loading ? (
+                                        <Skeleton h="4" w="40" />
+                                    ) : null}
+                                </Box>
+                            </Flex>
+                        </Box>
 
-                    {/* Filter & Search Bar */}
-                    <ScrollReveal width="100%" transition={{ delay: 0.4 }}>
+                        {/* Controls: category / search / sort */}
                         <Flex
-                            direction={{ base: "column", md: "row" }}
+                            direction={{ base: "column", lg: "row" }}
                             justify="space-between"
-                            align="center"
-                            bg="white"
-                            _dark={{ bg: "gray.800" }}
-                            p={4}
-                            rounded="xl"
-                            shadow="sm"
-                            border="1px solid"
-                            borderColor="border.subtle"
-                            mb={10}
-                            gap={4}
+                            align={{ base: "stretch", lg: "center" }}
+                            gap={5}
+                            mb={{ base: 10, md: 14 }}
                         >
-                            {/* Category Tabs */}
-                            <HStack overflowX="auto" pb={{ base: 2, md: 0 }} w={{ base: "full", md: "auto" }} gap={2} className="no-scrollbar">
-                                <Button size="sm" variant="solid" bg="primary.500" color="white" rounded="lg">All Projects</Button>
-                                <Button size="sm" variant="ghost" color="text.secondary" _hover={{ bg: "primary.50" }} rounded="lg">Web Development</Button>
-                                <Button size="sm" variant="ghost" color="text.secondary" _hover={{ bg: "primary.50" }} rounded="lg">Mobile Apps</Button>
-                                <Button size="sm" variant="ghost" color="text.secondary" _hover={{ bg: "primary.50" }} rounded="lg">UI/UX Design</Button>
+                            <HStack
+                                role="group"
+                                aria-label="Filter by category"
+                                overflowX="auto"
+                                gap={6}
+                                className="no-scrollbar"
+                                minH="8"
+                                pb={{ base: 1, lg: 0 }}
+                            >
+                                {(["all", ...categories] as const).map((cat) => {
+                                    const active = category === cat;
+                                    return (
+                                        <chakra.button
+                                            key={cat}
+                                            type="button"
+                                            onClick={() => setCategory(cat)}
+                                            aria-pressed={active}
+                                            position="relative"
+                                            flexShrink={0}
+                                            py={1.5}
+                                            fontSize="sm"
+                                            fontWeight={active ? 600 : 500}
+                                            color={active ? "primary.600" : "text.secondary"}
+                                            cursor="pointer"
+                                            rounded="sm"
+                                            transitionProperty="color"
+                                            transitionDuration="fast"
+                                            _hover={{ color: "primary.600" }}
+                                            _active={{ color: "primary.700" }}
+                                            _after={{
+                                                content: '""',
+                                                position: "absolute",
+                                                left: 0,
+                                                right: 0,
+                                                bottom: 0,
+                                                height: "2px",
+                                                bg: "primary.500",
+                                                transform: active ? "scaleX(1)" : "scaleX(0)",
+                                                transformOrigin: "left",
+                                                transition: "transform 0.2s cubic-bezier(0.16, 1, 0.3, 1)",
+                                            }}
+                                        >
+                                            {cat === "all" ? "All" : CATEGORY_LABEL[cat] ?? cat}
+                                        </chakra.button>
+                                    );
+                                })}
                             </HStack>
 
-                            {/* Search & Sort */}
-                            <HStack w={{ base: "full", md: "auto" }} gap={3}>
-                                <Box position="relative" w={{ base: "full", md: "64" }}>
+                            <HStack gap={5} w={{ base: "full", lg: "auto" }}>
+                                <Box position="relative" w={{ base: "full", lg: "64" }}>
                                     <Input
-                                        placeholder="Search projects..."
-                                        pl={10}
-                                        size="md"
-                                        rounded="lg"
-                                        bg="gray.50"
-                                        _dark={{ bg: "gray.900" }}
+                                        type="search"
+                                        value={query}
+                                        onChange={(e) => setQuery(e.target.value)}
+                                        placeholder="Search projects"
+                                        aria-label="Search projects"
+                                        variant="flushed"
+                                        pl={7}
+                                        fontSize="sm"
+                                        borderBottomColor="border"
+                                        _focusVisible={{ borderBottomColor: "primary.500", boxShadow: "0 1px 0 0 var(--chakra-colors-primary-500)" }}
                                     />
-                                    <Box position="absolute" left={3} top="50%" transform="translateY(-50%)" color="gray.400">
-                                        <LuSearch />
+                                    <Box position="absolute" left={0} top="50%" transform="translateY(-50%)" color="text.muted" pointerEvents="none">
+                                        <LuSearch size={16} aria-hidden="true" />
                                     </Box>
                                 </Box>
-                                <Box position="relative" w={{ base: "full", md: "40" }}>
-                                    <select
-                                        style={{
-                                            width: '100%',
-                                            padding: '8px 40px 8px 16px',
-                                            borderRadius: '8px',
-                                            backgroundColor: 'white',
-                                            border: '1px solid #cbd5e1',
-                                            appearance: 'none',
-                                            fontSize: '14px',
-                                            cursor: 'pointer'
-                                        }}
-                                    >
-                                        <option>Newest First</option>
-                                        <option>Oldest First</option>
-                                        <option>Alphabetical</option>
-                                    </select>
-                                    <Box position="absolute" right={3} top="50%" transform="translateY(-50%)" color="gray.400" pointerEvents="none">
-                                        <LuChevronRight style={{ transform: 'rotate(90deg)' }} />
-                                    </Box>
-                                </Box>
+                                <select
+                                    value={sort}
+                                    onChange={(e) => setSort(e.target.value as SortKey)}
+                                    aria-label="Sort projects"
+                                    style={{
+                                        padding: "8px 4px",
+                                        background: "transparent",
+                                        borderBottom: "1px solid rgba(0,0,0,0.08)",
+                                        fontSize: "14px",
+                                        cursor: "pointer",
+                                        color: "var(--chakra-colors-text-secondary)",
+                                    }}
+                                >
+                                    <option value="newest">Newest</option>
+                                    <option value="views">Most viewed</option>
+                                    <option value="featured">Featured first</option>
+                                </select>
                             </HStack>
                         </Flex>
-                    </ScrollReveal>
 
-                    {/* Projects Grid */}
-                    <ScrollReveal width="100%" transition={{ delay: 0.6 }}>
-                        <SimpleGrid columns={{ base: 1, md: 2, lg: 3 }} gap={8}>
-                            {projects.map((project) => (
-                                <Box
-                                    key={project.id}
-                                    className="group"
-                                    bg="white"
-                                    _dark={{ bg: "gray.800" }}
-                                    rounded="xl"
-                                    overflow="hidden"
-                                    border="1px solid"
-                                    borderColor="border.subtle"
-                                    _hover={{ borderColor: "primary.300", shadow: "xl" }}
-                                    transition="all 0.3s"
-                                    display="flex"
-                                    flexDirection="column"
-                                    h="full"
-                                >
-                                    <Box position="relative" overflow="hidden" aspectRatio={4 / 3}>
-                                        <Image
-                                            src={project.image}
-                                            alt={project.title}
-                                            objectFit="cover"
-                                            w="full"
-                                            h="full"
-                                            transition="transform 0.5s"
-                                            _groupHover={{ transform: "scale(1.05)" }}
-                                        />
-                                        <Box position="absolute" top={4} left={4}>
-                                            <Badge bg="white/90" _dark={{ bg: "black/80" }} color="primary.500" px={2.5} py={1} rounded="md" shadow="sm">
-                                                {project.category}
-                                            </Badge>
-                                        </Box>
-                                        <Box position="absolute" inset={0} bg="black/0" _groupHover={{ bg: "black/10" }} transition="all 0.3s" />
-                                    </Box>
+                        {/* Index body */}
+                        {loading ? (
+                            <ProjectsSkeleton />
+                        ) : error ? (
+                            <ErrorState
+                                title="Couldn't load the projects"
+                                description={errorMessage(error)}
+                                onRetry={reload}
+                                retrying={refreshing}
+                            />
+                        ) : projects.length === 0 ? (
+                            <EmptyState
+                                icon={<LuFolderOpen />}
+                                title="No projects yet"
+                                description="Published projects will appear here."
+                                action={
+                                    <Button asChild size="sm" variant="outline" rounded="md">
+                                        <Link href="/experience">See my experience</Link>
+                                    </Button>
+                                }
+                            />
+                        ) : visible.length === 0 ? (
+                            <EmptyState
+                                icon={<LuSearch />}
+                                title="No projects match"
+                                description="Try another category or search term."
+                                action={
+                                    <Button onClick={resetFilters} size="sm" variant="outline" rounded="md">
+                                        Reset filters
+                                    </Button>
+                                }
+                            />
+                        ) : (
+                            <VStack gap={{ base: 10, md: 16 }} align="stretch">
+                                {spotlight && <Spotlight project={spotlight} />}
 
-                                    <Box p={6} flex="1" display="flex" flexDirection="column">
-                                        <Heading size="md" mb={2} color="text.primary" _groupHover={{ color: "primary.500" }} transition="colors">
-                                            {project.title}
-                                        </Heading>
-                                        <Text fontSize="sm" color="text.secondary" mb={4} lineClamp={2}>
-                                            {project.description}
-                                        </Text>
-
-                                        <HStack gap={2} mb={6} flexWrap="wrap">
-                                            {project.tags.map((tag) => (
-                                                <Badge key={tag} variant="subtle" colorScheme="gray" fontSize="xs" px={2} py={1} rounded="md">
-                                                    {tag}
-                                                </Badge>
-                                            ))}
-                                        </HStack>
-
-                                        <HStack gap={3} mt="auto">
-                                            <Button asChild flex="1" variant="outline" size="sm" rounded="lg">
-                                                <Link href={`/projects/${project.id}`}>Details</Link>
-                                            </Button>
-                                            <Button flex="1" bg="primary.500" color="white" size="sm" rounded="lg" _hover={{ bg: "primary.600" }} gap={1}>
-                                                Live Demo <Icon as={LuArrowUpRight} fontSize="xs" />
-                                            </Button>
-                                        </HStack>
-                                    </Box>
-                                </Box>
-                            ))}
-                        </SimpleGrid>
-                    </ScrollReveal>
-
-                    {/* Pagination placeholder */}
-                    <Flex mt={12} justify="center">
-                        <HStack gap={2}>
-                            <Button size="sm" variant="outline" rounded="lg" disabled>1</Button>
-                            <Button size="sm" variant="ghost" rounded="lg">2</Button>
-                            <Button size="sm" variant="ghost" rounded="lg">3</Button>
-                        </HStack>
-                    </Flex>
-                </Container>
+                                {gridItems.length > 0 && (
+                                    <Grid templateColumns={{ base: "1fr", md: "repeat(2, 1fr)", lg: "repeat(12, 1fr)" }} gap={8}>
+                                        {gridItems.map((project, i) => (
+                                            <GridItem key={project.id} colSpan={{ base: 1, md: 1, lg: spanFor(i) }}>
+                                                <ProjectCard project={project} />
+                                            </GridItem>
+                                        ))}
+                                    </Grid>
+                                )}
+                            </VStack>
+                        )}
+                    </Container>
+                </PageEntrance>
 
                 <Footer />
             </Box>
         </PageWrapper>
+    );
+}
+
+/** The featured (or newest) entry, oversized. */
+function Spotlight({ project }: { project: Project }) {
+    const thumb = mediaUrl(project.thumbnail_url);
+    return (
+        <LinkBox as="article" className="group" position="relative">
+            <Grid templateColumns={{ base: "1fr", lg: "repeat(12, 1fr)" }} gap={{ base: 6, lg: 10 }} alignItems="center">
+                <GridItem colSpan={{ base: 1, lg: 7 }}>
+                    <Box
+                        position="relative"
+                        overflow="hidden"
+                        rounded="2xl"
+                        borderWidth="1px"
+                        borderColor="border"
+                        aspectRatio={16 / 10}
+                        bg="primary.50"
+                        transitionProperty="border-color, box-shadow"
+                        transitionDuration="moderate"
+                        _groupHover={CARD_HOVER}
+                    >
+                        {thumb ? (
+                            <Image src={thumb} alt="" objectFit="cover" w="full" h="full" />
+                        ) : (
+                            <Flex w="full" h="full" align="center" justify="center" color="primary.300">
+                                <LuFolderOpen size={48} aria-hidden="true" />
+                            </Flex>
+                        )}
+                    </Box>
+                </GridItem>
+                <GridItem colSpan={{ base: 1, lg: 5 }}>
+                    <VStack align="flex-start" gap={4}>
+                        <Text textStyle="meta" color="text.muted">
+                            {project.featured ? "Featured" : "Latest"} · {CATEGORY_LABEL[project.category] ?? project.category}
+                        </Text>
+                        <Heading
+                            as="h2"
+                            textStyle="sectionTitle"
+                            color="text.primary"
+                            transitionProperty="color"
+                            transitionDuration="fast"
+                            _groupHover={{ color: "primary.600" }}
+                        >
+                            <LinkOverlay asChild>
+                                <Link href={`/projects/${project.id}`}>{project.title}</Link>
+                            </LinkOverlay>
+                        </Heading>
+                        {(project.short_description || project.description) && (
+                            <Text textStyle="body" color="text.secondary" lineClamp={3}>
+                                {project.short_description || project.description}
+                            </Text>
+                        )}
+                        {project.technologies.length > 0 && (
+                            <Text fontSize="sm" color="text.muted">
+                                {project.technologies.slice(0, 6).join(" / ")}
+                            </Text>
+                        )}
+                        <HStack gap={4} textStyle="meta" color="text.muted">
+                            <Text>{timelineLabel(project)}</Text>
+                            <Text>
+                                {project.view_count.toLocaleString("en-US")} {project.view_count === 1 ? "view" : "views"}
+                            </Text>
+                        </HStack>
+                        <HStack gap={4} pt={2} flexWrap="wrap">
+                            <HStack gap={2} color="primary.600" fontWeight={600} fontSize="sm">
+                                <Text>Read the case study</Text>
+                                <LuArrowRight size={16} aria-hidden="true" />
+                            </HStack>
+                            {project.demo_url && (
+                                <Button
+                                    asChild
+                                    size="sm"
+                                    rounded="md"
+                                    bg="primary.500"
+                                    color="white"
+                                    _hover={{ bg: "primary.600" }}
+                                    _active={{ bg: "primary.700" }}
+                                    position="relative"
+                                    zIndex={1}
+                                    gap={1.5}
+                                >
+                                    <a href={project.demo_url} target="_blank" rel="noopener noreferrer">
+                                        Live demo <LuArrowUpRight size={14} aria-hidden="true" />
+                                    </a>
+                                </Button>
+                            )}
+                        </HStack>
+                    </VStack>
+                </GridItem>
+            </Grid>
+        </LinkBox>
+    );
+}
+
+/** Same shapes as the loaded index: spotlight row, then the 7/5 card grid. */
+function ProjectsSkeleton() {
+    return (
+        <VStack gap={{ base: 10, md: 16 }} align="stretch" aria-busy="true" aria-label="Loading projects">
+            <Grid templateColumns={{ base: "1fr", lg: "repeat(12, 1fr)" }} gap={{ base: 6, lg: 10 }} alignItems="center">
+                <GridItem colSpan={{ base: 1, lg: 7 }}>
+                    <Skeleton aspectRatio={16 / 10} rounded="2xl" />
+                </GridItem>
+                <GridItem colSpan={{ base: 1, lg: 5 }}>
+                    <VStack align="stretch" gap={4}>
+                        <Skeleton h="4" w="32" />
+                        <Skeleton h="10" w="80%" />
+                        <Skeleton h="16" w="full" />
+                        <Skeleton h="4" w="48" />
+                    </VStack>
+                </GridItem>
+            </Grid>
+            <Grid templateColumns={{ base: "1fr", md: "repeat(2, 1fr)", lg: "repeat(12, 1fr)" }} gap={8}>
+                {[0, 1, 2, 3].map((i) => (
+                    <GridItem key={i} colSpan={{ base: 1, md: 1, lg: spanFor(i) }}>
+                        <ProjectCardSkeleton />
+                    </GridItem>
+                ))}
+            </Grid>
+        </VStack>
     );
 }

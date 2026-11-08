@@ -4,21 +4,23 @@ import { Box, type BoxProps } from '@chakra-ui/react'
 import { forwardRef } from 'react'
 
 export interface GlassPanelProps extends BoxProps {
+  /** @deprecated Ignored. The panel is a solid surface; decorative blur was removed. */
   blur?: string
-  opacity?: number
 }
 
+/** A raised surface: solid background, hairline border, small neutral shadow. */
 export const GlassPanel = forwardRef<HTMLDivElement, GlassPanelProps>(
-  ({ blur = '16px', opacity = 0.7, children, ...props }, ref) => {
+  ({ blur, children, ...props }, ref) => {
+    // Pulled out so it never reaches Box, where `blur` is a CSS filter prop.
+    void blur
     return (
       <Box
         ref={ref}
-        bg="glass.bg"
-        backdropFilter={`blur(${blur})`}
+        bg="surface"
         borderRadius="xl"
-        border="1px solid"
-        borderColor="glass.border"
-        boxShadow="lg"
+        borderWidth="1px"
+        borderColor="border"
+        boxShadow="0 1px 2px rgba(15, 23, 42, 0.04), 0 4px 12px -6px rgba(15, 23, 42, 0.08)"
         {...props}
       >
         {children}
